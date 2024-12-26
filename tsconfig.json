@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@api/*": ["src/api/*"],
+      "@views/*": ["src/views/*"]
+    },
+    "types": ["element-plus/global"]
+    // 其他配置项
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.ts","src/**/**/*.vue",
+    "src/types/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}
