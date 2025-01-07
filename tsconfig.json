@@ -8,7 +8,16 @@
       "@api/*": ["src/api/*"],
       "@views/*": ["src/views/*"]
     },
-    "types": ["element-plus/global"]
+    "types": ["element-plus/global","vue","node"],
+    "target": "es2015",
+    "module": "commonjs",
+    "strict": true,
+    "lib": ["es2015","dom"],
+    "jsx": "preserve",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "eschewModuleAugmentation": true
     // 其他配置项
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.ts","src/**/**/*.vue",

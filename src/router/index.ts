@@ -6,6 +6,7 @@ import Dashboard from "@components/Dashboard.vue";
 import Users from "@components/Users.vue";
 import Profile from "@components/Profile.vue";
 import HomeDetail from "@components/HomeDetail.vue";
+import ProductManage from "@views/product/ProductManage.vue";
 
 // 定义路由数组，使用自定义的 AppRouteRecordRaw 类型
 const routes: RouteRecordRaw[] = [
@@ -36,6 +37,11 @@ const routes: RouteRecordRaw[] = [
                 path: '/home/users',
                 component: Users,
                 meta: { title: '用户管理' }
+            },
+            {
+                path: '/home/product-manage',
+                component: ProductManage,
+                meta: { title: '商品管理' }
             },
         ]
     },

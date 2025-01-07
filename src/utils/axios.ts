@@ -1,5 +1,4 @@
 
-require('dotenv').config();
 import axios, { CancelTokenSource } from 'axios';
 
 // 定义请求方法的类型，这里限定为几种常见的HTTP方法

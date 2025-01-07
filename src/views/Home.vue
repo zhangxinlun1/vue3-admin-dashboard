@@ -21,7 +21,27 @@
             <span>用户管理</span>
           </el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="3">
+          <template #title>
+            <el-icon><Setting/></el-icon>
+            <span>用户</span>
+          </template>
+          <el-menu-item index="/home/product-manage">
+            <el-icon><Setting/></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="2">
+          <template #title>
+            <el-icon><Setting/></el-icon>
+            <span>商品</span>
+          </template>
+          <el-menu-item index="/home/product-manage">
+            <el-icon><Setting/></el-icon>
+            <span>商品管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="1">
           <template #title>
             <el-icon><Setting/></el-icon>
             <span>设置</span>
