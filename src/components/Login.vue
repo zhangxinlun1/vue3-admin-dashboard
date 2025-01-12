@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import router from "@/router/index.ts";
+import {router} from "@/router/index.ts";
 import { User,Lock} from '@element-plus/icons-vue'
 const form = ref({
   username:'',

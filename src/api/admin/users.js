@@ -1,4 +1,3 @@
-"use strict";
 // import axios from "axios";
 // import {makeRequest} from "@/utils/axios";
 //

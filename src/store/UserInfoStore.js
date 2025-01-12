@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserInfoStore = void 0;
-const pinia_1 = require("pinia");
-exports.UserInfoStore = (0, pinia_1.defineStore)('UserInfoStore', {
+import { defineStore } from 'pinia';
+export const UserInfoStore = defineStore('UserInfoStore', {
     state: () => ({
         username: '',
         age: 18

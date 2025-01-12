@@ -6,6 +6,11 @@
       <el-table :data="Products" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80"></el-table-column>
         <el-table-column prop="name" label="名称"></el-table-column>
+        <el-table-column prop="img" label="图片">
+          <template #default="scope">
+            <img :src="scope.row.img" alt="图片" style="width: 100px; height: 100px;">
+          </template>
+        </el-table-column>
         <el-table-column prop="description" label="描述"></el-table-column>
         <el-table-column prop="price" label="价格"></el-table-column>
         <el-table-column prop="category" label="类别"></el-table-column>
@@ -48,13 +53,7 @@
 import {ref, reactive,onMounted} from 'vue';
 import AddProductModal from './AddProductModal.vue';
 import EditProductModal from './EditProductModal.vue';
-import {
-  getProducts,
-  addProduct,
-  updateProduct,
-  deleteProduct,
-} from '@/api/admin/products';
-import {IProduct} from "@api/admin/interface";
+import {getProducts} from "@/api/admin/products.ts";
 
 const showAddProductModal = ref(false);
 const productToEdit = ref({});
@@ -63,12 +62,13 @@ const errorMessage = ref('');
 
 const dialogFormVisible = ref(false)
 
-const Products = ref<IProduct[]>([{}])
+const Products = ref(null)
 // 获取商品列表
 onMounted(async () => {
   try {
-    const result = await getProducts();
-   Products.value = result.data
+     await getProducts().then((res) => {
+      Products.value = res.data
+    });
   } catch (error) {
     console.error('获取商品列表失败', error);
     showErrorDialog.value = true;

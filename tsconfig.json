@@ -3,15 +3,16 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@stores/*": ["src/stores/*"],
-      "@api/*": ["src/api/*"],
-      "@views/*": ["src/views/*"]
+    },
+    "vueCompilerOptions": {
+      "experimentalDisableTemplateSupport": true,
+      "tsClassDeclaration": true,
+      "generateDeclarations": true
     },
     "types": ["element-plus/global","vue","node"],
-    "target": "es2015",
-    "module": "commonjs",
-    "strict": true,
+    "target": "esnext",
+    "module": "esnext",
+    "strict": false,
     "lib": ["es2015","dom"],
     "jsx": "preserve",
     "importHelpers": true,

@@ -1,6 +1,6 @@
 // 引入模拟的makeUserRequest函数
 import {makeUserRequest} from "./admin/mockRequest"
-import {HttpMethods, IUser} from "@api/admin/interface";
+import {HttpMethods, IUser} from "@/api/admin/interface";
 // 获取用户列表
 export const getUsers = () => {
 	return makeUserRequest({

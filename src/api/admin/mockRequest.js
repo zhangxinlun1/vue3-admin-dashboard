@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeUserRequest = exports.requestHandlers = exports.makeRequest = void 0;
 // export const makeRequest = (object:IAxiosRequestOptions):Promise<IAxiosResponse<IProduct[] | [] | string>> => {
 //     if (object.url === '/api/admin/products') {
 //         switch (object.method) {
@@ -56,8 +53,8 @@ exports.makeUserRequest = exports.requestHandlers = exports.makeRequest = void 0
 //
 //     return Promise.reject(new Error('未匹配到对应的模拟API路径'));
 // };
-const makeRequest = (object) => {
-    const pathHandlers = exports.requestHandlers[object.url];
+export const makeRequest = (object) => {
+    const pathHandlers = requestHandlers[object.url];
     if (pathHandlers) {
         const methodHandler = pathHandlers[object.method];
         if (methodHandler) {
@@ -66,12 +63,37 @@ const makeRequest = (object) => {
     }
     return Promise.reject(new Error('未匹配到对应的模拟API路径'));
 };
-exports.makeRequest = makeRequest;
-exports.requestHandlers = {
+export const requestHandlers = {
     '/api/admin/products': {
         'GET': () => {
             const mockProducts = [
-            // 产品数据定义不变
+                {
+                    id: 1,
+                    name: '时尚白色T恤',
+                    description: '纯棉材质，简约百搭，夏季必备单品。',
+                    price: 29.99,
+                    category: 'T-shirt',
+                    stock: 50,
+                    img: "https://p3-search.byteimg.com/img/labis/6aba3b5098369b44c45499ad7541d7e0~480x480.JPEG"
+                },
+                {
+                    id: 2,
+                    name: '复古蓝色牛仔裤',
+                    description: '经典牛仔布料，复古版型，修饰腿型。',
+                    price: 79.99,
+                    category: 'Jeans',
+                    stock: 30,
+                    img: "https://p3-search.byteimg.com/img/labis/5663098d614cd067579878c123fc00fc~480x480.JPEG"
+                },
+                {
+                    id: 3,
+                    name: '优雅黑色连衣裙',
+                    description: '蕾丝与内衬结合，尽显优雅气质，适合多种场合。',
+                    price: 129.99,
+                    category: 'Dress',
+                    stock: 20,
+                    img: "https://p3-search.byteimg.com/img/labis/f1b1e947d8f8bf39ab7d4ec37532bae2~480x480.JPEG"
+                },
             ];
             return Promise.resolve({ status: 200, data: mockProducts });
         },
@@ -83,7 +105,7 @@ exports.requestHandlers = {
         'POST': () => Promise.resolve({ status: 201, data: '用户注册成功', message: '用户注册成功' })
     }
 };
-const makeUserRequest = (object) => {
+export const makeUserRequest = (object) => {
     if (object.url === '/api/users/user-list') {
         switch (object.method) {
             case 'GET':
@@ -125,4 +147,3 @@ const makeUserRequest = (object) => {
     }
     return Promise.reject(new Error('未匹配到对应的模拟API路径'));
 };
-exports.makeUserRequest = makeUserRequest;

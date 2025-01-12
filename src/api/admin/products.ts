@@ -1,6 +1,6 @@
 // 引入模拟的makeRequest函数
 import {makeRequest} from "./mockRequest"
-import {HttpMethods, IAxiosResponse, IProduct} from "@api/admin/interface";
+import {HttpMethods, IAxiosResponse, IProduct} from "./interface";
 // 获取商品列表
 // export const getProducts = (): Promise<IAxiosResponse<IProduct[]>> => {
 // 	return makeRequest({

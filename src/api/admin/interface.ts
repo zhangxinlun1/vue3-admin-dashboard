@@ -24,12 +24,13 @@ export interface IAxiosResponse<T> {
 	message?: string; // 对于像用户注册成功等情况有消息提示时可以使用
 }
 export interface IProduct {
-	id?: number;
-	name?: string;
-	description?: string;
-	price?: number;
-	category?: string;
-	stock?: number;
+	id: number;
+	name: string;
+	description: string;
+	price: number;
+	category: string;
+	stock: number;
+	img:string;
 }
 export interface IAxiosRequestOptions {
 	method: HttpMethods;

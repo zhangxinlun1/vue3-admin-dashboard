@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import Home from '@/views/Home.vue';
-import Login from '@/components/Login.vue';
-import NotFound from '@/components/NotFound.vue';
-import Dashboard from "@components/Dashboard.vue";
-import Users from "@components/Users.vue";
-import Profile from "@components/Profile.vue";
-import HomeDetail from "@components/HomeDetail.vue";
-import ProductManage from "@views/product/ProductManage.vue";
+import Home from "@/views/Home.vue";
+import HomeDetail from "@/components/HomeDetail.vue";
+import Dashboard from "@/components/Dashboard.vue";
+import Users from "@/components/Users.vue";
+import NotFound from "@/components/NotFound.vue";
+import ProductManage from "@/views/product/ProductManage.vue";
 
 // 定义路由数组，使用自定义的 AppRouteRecordRaw 类型
+
+
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
@@ -16,7 +16,7 @@ const routes: RouteRecordRaw[] = [
     },
     {
         path: '/login',
-        component: Login
+        component: () => import('@/components/Login.vue')
     },
     {
         path: '/home',
@@ -51,22 +51,10 @@ const routes: RouteRecordRaw[] = [
     }
 ];
 
-const router = createRouter({
+// 路由守卫示例：全局前置守卫，用于验证用户是否登录
+
+export const router = createRouter({
     history: createWebHistory(),
     routes
 });
 
-// 路由守卫示例：全局前置守卫，用于验证用户是否登录
-router.beforeEach((to, from, next) => {
-    const publicPages = ['/login'];
-    const authRequired = to.meta.requiresAuth as boolean;
-    const loggedIn = localStorage.getItem('token');
-
-    if (authRequired &&!loggedIn) {
-        next('/login');
-    } else {
-        next();
-    }
-});
-
-export default router;
