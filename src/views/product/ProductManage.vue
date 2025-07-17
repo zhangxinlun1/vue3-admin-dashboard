@@ -2,6 +2,8 @@
   <div class="product-management">
     <el-card class="box-card">
       <h2>商品管理</h2>
+
+      <ItemSerach></ItemSerach>
       <el-button type="primary" @click="dialogFormVisible = true">添加商品</el-button>
       <el-table :data="Products" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80"></el-table-column>
@@ -17,7 +19,7 @@
         <el-table-column prop="stock" label="库存"></el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button type="primary" @click="showEditProductModal(scope.row)">编辑</el-button>
+            <el-button type="primary" @click="showEditProductModal(scope.row)">开单</el-button>
             <el-button type="primary" @click="deleteProducts(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
@@ -54,6 +56,7 @@ import {ref, reactive,onMounted} from 'vue';
 import AddProductModal from './AddProductModal.vue';
 import EditProductModal from './EditProductModal.vue';
 import {getProducts} from "@/api/admin/products.ts";
+import ItemSerach from "@/views/product/ItemSerach.vue";
 
 const showAddProductModal = ref(false);
 const productToEdit = ref({});
@@ -69,6 +72,7 @@ onMounted(async () => {
      await getProducts().then((res) => {
       Products.value = res.data
     });
+     console.log(Products.value)
   } catch (error) {
     console.error('获取商品列表失败', error);
     showErrorDialog.value = true;
@@ -111,8 +115,10 @@ const deleteProducts = async (productId) => {
   //   errorMessage.value = '删除商品时出现错误，请稍后重试';
   // }
 };
-
+const daily = ref(0)
 const showEditProductModal = (product) => {
+  console.log(product.price)
+  daily.value += product.price
   productToEdit.value = {...product};
   showEditProductModal.value = true;
 };

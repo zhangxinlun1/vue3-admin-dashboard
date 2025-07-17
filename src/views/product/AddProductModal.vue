@@ -5,7 +5,6 @@
         <el-input v-model="product.name"></el-input>
       </el-form-item>
       <el-form-item label="图片">
-
         <el-upload
             class="avatar-uploader"
             action="/api/files/upload"
@@ -17,14 +16,14 @@
           <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
         </el-upload>
       </el-form-item>
-      <div>
-        <input type="file" ref="fileInput" @change="handleFileChange" />
-        <button @click="uploadImage">上传图片</button>
-        <div v-if="product.img">
-          <img :src="product.img" alt="上传的图片" style="max-width: 300px" />
-          <p>图片访问地址：{{ product.img }}</p>
-        </div>
-      </div>
+<!--      <div>-->
+<!--        <input type="file" ref="fileInput" @change="handleFileChange" />-->
+<!--        <button @click="uploadImage">上传图片</button>-->
+<!--        <div v-if="product.img">-->
+<!--          <img :src="product.img" alt="上传的图片" style="max-width: 300px" />-->
+<!--          <p>图片访问地址：{{ product.img }}</p>-->
+<!--        </div>-->
+<!--      </div>-->
 
       <el-form-item label="描述" prop="description">
         <el-input type="textarea" v-model="product.description"></el-input>
@@ -71,6 +70,7 @@ const addProduct = () => {
   emit('add',product.value)
 }
 const handleUpload = async (response, file, fileList)=>{
+  console.log(response,file,fileList);
   product.value.img = response.data.url
   // 这里假设你的服务器端有一个接收图片上传的接口地址为 /api/upload，根据实际情况修改
 
@@ -94,6 +94,7 @@ const handleFileChange = (e) => {
     alert('请选择要上传的图片');
     return;
   }
+  console.log({file})
   // 这里可以添加更多文件类型验证逻辑，比如只允许特定图片格式
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
@@ -150,7 +151,6 @@ const beforeUpload = (file)=> {
     this.$message.error('文件大小超出限制');
     return false;
   }
-  console.log('ok')
   return true; // 返回true允许文件上传
 }
 const handleSubmit = () => {
