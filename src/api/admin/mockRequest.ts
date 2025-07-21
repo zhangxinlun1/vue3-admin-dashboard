@@ -1,61 +1,6 @@
 // 模拟的makeRequest函数，用于根据不同请求模拟返回数据
 import {IAxiosRequestOptions, IAxiosResponse, IProduct} from "@/api/admin/interface";
 
-// export const makeRequest = (object:IAxiosRequestOptions):Promise<IAxiosResponse<IProduct[] | [] | string>> => {
-//     if (object.url === '/api/admin/products') {
-//         switch (object.method) {
-//             case 'GET':
-//                 const mockProducts:IProduct[] = [
-//                     {
-//                         id: 1,
-//                         name: '时尚白色T恤',
-//                         description: '纯棉材质，简约百搭，夏季必备单品。',
-//                         price: 29.99,
-//                         category: 'T-shirt',
-//                         stock: 50,
-//                     },
-//                     {
-//                         id: 2,
-//                         name: '复古蓝色牛仔裤',
-//                         description: '经典牛仔布料，复古版型，修饰腿型。',
-//                         price: 79.99,
-//                         category: 'Jeans',
-//                         stock: 30,
-//                     },
-//                     {
-//                         id: 3,
-//                         name: '优雅黑色连衣裙',
-//                         description: '蕾丝与内衬结合，尽显优雅气质，适合多种场合。',
-//                         price: 129.99,
-//                         category: 'Dress',
-//                         stock: 20,
-//                     },
-//                 ];
-//                 return Promise.resolve({ data: mockProducts,status:200 });
-//             case 'POST':
-//                 return Promise.resolve({ status: 201,data:[] });
-//             case 'PUT':
-//                 return Promise.resolve({ status: 200,data:[] });
-//             case 'DELETE':
-//                 return Promise.resolve({ status: 204,data:[] });
-//             default:
-//                 return Promise.reject(new Error('不支持的请求方法'));
-//         }
-//     }
-//
-//     // 如果是其他路径（比如这里假设的 /api/user 等其他情况，可按需扩展更多路径模拟）
-//     if (object.url === '/api/user') {
-//         switch (object.method) {
-//             case 'POST':
-//                 // 这里简单模拟用户注册成功返回，可根据实际业务细化返回数据
-//                 return Promise.resolve({ status: 201,data:[], message: '用户注册成功' });
-//             default:
-//                 return Promise.reject(new Error('不支持的请求方法'));
-//         }
-//     }
-//
-//     return Promise.reject(new Error('未匹配到对应的模拟API路径'));
-// };
 export const makeRequest = (object:IAxiosRequestOptions): Promise<IAxiosResponse<IProduct[] | [] | string>> => {
     const pathHandlers = requestHandlers[object.url];
     if (pathHandlers) {
@@ -98,7 +43,7 @@ export const requestHandlers: Record<string, Record<string, () => Promise<IAxios
                         img:"https://p3-search.byteimg.com/img/labis/f1b1e947d8f8bf39ab7d4ec37532bae2~480x480.JPEG"
                     },
                 ];
-            return Promise.resolve({ status: 200, data: mockProducts });
+            return Promise.resolve({ status: 200, data: mockProducts, message: '获取产品数据成功' });
         },
         'POST': () => Promise.resolve({ status: 201, data: [] }),
         'PUT': () => Promise.resolve({ status: 200, data: [] }),

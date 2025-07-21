@@ -2,26 +2,29 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["src/*"]
     },
-    "vueCompilerOptions": {
-      "experimentalDisableTemplateSupport": true,
-      "tsClassDeclaration": true,
-      "generateDeclarations": true
-    },
-    "types": ["element-plus/global","vue","node"],
-    "target": "esnext",
+    "target": "es2017",
     "module": "esnext",
+    "moduleResolution": "node",
     "strict": false,
-    "lib": ["es2015","dom"],
+    "lib": ["es2017", "dom"],
     "jsx": "preserve",
     "importHelpers": true,
-    "moduleResolution": "node",
     "experimentalDecorators": true,
-    "eschewModuleAugmentation": true
-    // 其他配置项
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.ts","src/**/**/*.vue",
-    "src/types/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx", 
+    "src/**/*.vue",
+    "src/**/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

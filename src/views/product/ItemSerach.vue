@@ -406,7 +406,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import Chart from 'chart.js/auto';
+import { Chart } from 'chart.js/auto';
 
 // 状态管理
 const showTab = ref('search');

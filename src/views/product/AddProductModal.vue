@@ -54,6 +54,7 @@ import {ref,onMounted,getCurrentInstance} from 'vue';
 
 
 import {Plus} from "@element-plus/icons-vue";
+import { ElMessage } from 'element-plus';
 import instance from "@/api/axios";
 import axios from "axios";
 const { proxy } = getCurrentInstance();
@@ -143,12 +144,12 @@ const handleClose = () => {
 const beforeUpload = (file)=> {
   const allowedFileTypes = ['image/jpeg', 'image/png','image/jpg', 'image/gif']; // 允许的文件类型列表
   if (!allowedFileTypes.includes(file.type)) {
-    this.$message.error('不允许的文件类型');
+    ElMessage.error('不允许的文件类型');
     return false; // 返回false则阻止文件上传
   }
   const maxFileSize = 1024 * 1024 * 5; // 最大文件大小限制（5MB，可调整）
   if (file.size > maxFileSize) {
-    this.$message.error('文件大小超出限制');
+    ElMessage.error('文件大小超出限制');
     return false;
   }
   return true; // 返回true允许文件上传
