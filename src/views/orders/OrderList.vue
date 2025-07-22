@@ -454,6 +454,37 @@ onMounted(() => {
   }
 }
 
+// 移动端select下拉框位置修复
+@media (max-width: 768px) {
+  .order-list {
+    // 修复select下拉框位置
+    :deep(.el-select-dropdown) {
+      position: fixed !important;
+      z-index: 3000 !important;
+      
+      &.el-popper {
+        position: fixed !important;
+      }
+    }
+    
+    // 确保select组件在移动端正确显示
+    :deep(.el-select) {
+      .el-input {
+        position: relative;
+      }
+    }
+    
+    // 修复搜索表单中的select布局
+    .search-card {
+      .search-form {
+        .el-select {
+          width: 100% !important;
+        }
+      }
+    }
+  }
+}
+
 @media (max-width: 480px) {
   .order-list {
     .page-header {

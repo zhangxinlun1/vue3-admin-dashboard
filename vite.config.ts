@@ -32,14 +32,17 @@ export default defineConfig({
     extensions: [ '.json', '.ts','.js']
   },
   server:{
+    host: '0.0.0.0', // 允许外部设备访问
+    port: 5173,
     proxy:{
       '/api': {
         target: 'http://localhost:3333',
         rewrite: (path) => path.replace(/^\/api/, ''),
         changeOrigin: true,
       },
-    },cors: {
-      origin: ['http://localhost:5173'], // 允许来自前端运行端口（5173）的跨域请求
+    },
+    cors: {
+      origin: true, // 允许所有来源，或者使用 ['http://localhost:5173', /^http:\/\/192\.168\.\d+\.\d+:5173$/]
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     },

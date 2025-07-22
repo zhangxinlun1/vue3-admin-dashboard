@@ -22,18 +22,13 @@
             <div class="product-images">
               <div class="main-image">
                 <img 
-                  :src="product.images?.[0] || 'https://via.placeholder.com/400x400'" 
+                  :src="product.img || 'https://via.placeholder.com/400x400'" 
                   :alt="product.name"
                 />
               </div>
-              <div v-if="product.images && product.images.length > 1" class="image-thumbnails">
-                <div 
-                  v-for="(image, index) in product.images" 
-                  :key="index"
-                  class="thumbnail"
-                  :class="{ active: index === 0 }"
-                >
-                  <img :src="image" :alt="`${product.name} ${index + 1}`" />
+              <div v-if="product.img" class="image-thumbnails">
+                <div class="thumbnail active">
+                  <img :src="product.img" :alt="product.name" />
                 </div>
               </div>
             </div>
@@ -171,11 +166,22 @@ const loading = ref(false);
 const product = ref(null);
 const salesRecords = ref([]);
 
-// 获取商品详情
+// 加载商品详情
 const loadProductDetail = () => {
   const productId = route.params.id;
+  
+  // 首先尝试从localStorage获取
   const products = JSON.parse(localStorage.getItem('products') || '[]');
-  product.value = products.find((p: any) => p.id === productId);
+  let foundProduct = products.find((p: any) => p.id === productId);
+  
+  // 如果localStorage中没有找到商品，显示错误信息
+  if (!foundProduct) {
+    ElMessage.error('商品不存在');
+    router.push('/home/inventory/list');
+    return;
+  }
+  
+  product.value = foundProduct;
   
   if (product.value) {
     loadSalesRecords();

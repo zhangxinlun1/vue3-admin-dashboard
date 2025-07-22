@@ -1,11 +1,5 @@
 <template>
   <div class="dashboard">
-    <div class="demo-button">
-      <el-button type="primary" @click="loadDemoData" size="small">
-        <el-icon><Plus /></el-icon>
-        加载演示数据
-      </el-button>
-    </div>
     <!-- 统计卡片 -->
     <div class="stats-grid">
       <div class="stat-card revenue">
@@ -43,6 +37,7 @@
         <div class="stat-content">
           <div class="stat-value">{{ todayOrders }}</div>
           <div class="stat-label">今日订单</div>
+          <div class="stat-detail">{{ todayItems }}件</div>
           <div class="stat-change positive">
             <el-icon><ArrowUp /></el-icon>
             +{{ orderGrowth }}%
@@ -163,14 +158,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Money, PieChart, Document, Box, ArrowUp, ArrowDown, Minus,
-  TrendCharts, Warning 
-} from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import { initDemoData } from '@/utils/demoData';
+import { 
+  Money, 
+  PieChart, 
+  Document, 
+  Box, 
+  ArrowUp, 
+  ArrowDown, 
+  Minus,
+  TrendCharts,
+  Plus,
+  Warning
+} from '@element-plus/icons-vue';
 
 const router = useRouter();
 
@@ -178,6 +180,7 @@ const router = useRouter();
 const todayRevenue = ref(0);
 const todayProfit = ref(0);
 const todayOrders = ref(0);
+const todayItems = ref(0);
 const totalProducts = ref(0);
 
 const revenueGrowth = ref(12.5);
@@ -285,17 +288,6 @@ const restock = (item: any) => {
   ElMessage.success(`已为 ${item.name} 创建补货订单`);
 };
 
-// 加载演示数据
-const loadDemoData = () => {
-  try {
-    initDemoData();
-    loadStats();
-    ElMessage.success('演示数据加载成功！');
-  } catch (error) {
-    ElMessage.error('演示数据加载失败');
-  }
-};
-
 // 加载统计数据
 const loadStats = () => {
   // 从本地存储加载商品数据
@@ -313,6 +305,7 @@ const loadStats = () => {
   todayRevenue.value = todaySales.reduce((sum: number, sale: any) => sum + sale.totalAmount, 0);
   todayProfit.value = todaySales.reduce((sum: number, sale: any) => sum + sale.profit, 0);
   todayOrders.value = todaySales.length;
+  todayItems.value = todaySales.reduce((sum: number, sale: any) => sum + sale.quantity, 0);
   
   // 更新最近订单
   recentOrders.value = sales.slice(-5).map((sale: any) => ({
@@ -345,11 +338,6 @@ onMounted(() => {
 <style lang="scss" scoped>
 .dashboard {
   padding: 0;
-  
-  .demo-button {
-    margin-bottom: 16px;
-    text-align: center;
-  }
 }
 
 .stats-grid {
@@ -421,6 +409,17 @@ onMounted(() => {
       font-size: 14px;
       color: #6c757d;
       margin-bottom: 8px;
+    }
+    
+    .stat-detail {
+      font-size: 12px;
+      color: #409eff;
+      font-weight: 500;
+      margin-bottom: 8px;
+      background: rgba(64, 158, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
     }
     
     .stat-change {

@@ -37,11 +37,14 @@
           <el-option label="配饰" value="accessories" />
         </el-select>
         
-        <el-select v-model="searchForm.stockStatus" placeholder="库存状态" clearable style="width: 150px">
+        <el-select v-model="searchForm.specification" placeholder="商品规格" clearable style="width: 150px">
           <el-option label="全部" value="" />
-          <el-option label="充足" value="sufficient" />
-          <el-option label="预警" value="warning" />
-          <el-option label="缺货" value="out" />
+          <el-option label="S" value="S" />
+          <el-option label="M" value="M" />
+          <el-option label="L" value="L" />
+          <el-option label="XL" value="XL" />
+          <el-option label="XXL" value="XXL" />
+          <el-option label="均码" value="ONE_SIZE" />
         </el-select>
         
         <el-button type="primary" @click="handleSearch">
@@ -64,13 +67,14 @@
         v-loading="loading"
         class="product-table"
       >
-        <el-table-column prop="image" label="商品图片" width="100">
+        <el-table-column prop="img" label="商品图片" width="100">
           <template #default="scope">
             <el-image
-              :src="scope.row.image || 'https://via.placeholder.com/60x60'"
-              :preview-src-list="[scope.row.image]"
+              :src="scope.row.img || 'https://via.placeholder.com/60x60'"
+              :preview-src-list="[scope.row.img || 'https://via.placeholder.com/60x60']"
               fit="cover"
               style="width: 60px; height: 60px; border-radius: 8px;"
+              @error="handleImageError"
             />
           </template>
         </el-table-column>
@@ -92,17 +96,11 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="stock" label="库存" width="100">
+        <el-table-column prop="specification" label="规格" width="100">
           <template #default="scope">
-            <div class="stock-info">
-              <span class="stock-number">{{ scope.row.stock }}</span>
-              <el-tag 
-                :type="getStockStatusType(scope.row.stock, scope.row.alertStock)"
-                size="small"
-              >
-                {{ getStockStatusText(scope.row.stock, scope.row.alertStock) }}
-              </el-tag>
-            </div>
+            <el-tag type="info" size="small">
+              {{ scope.row.specification }}
+            </el-tag>
           </template>
         </el-table-column>
         
@@ -118,7 +116,20 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="brand" label="品牌" width="120" />
+        <el-table-column prop="stock" label="库存" width="100">
+          <template #default="scope">
+            <div class="stock-info">
+              <span class="stock-number">{{ scope.row.stock }}</span>
+              <el-tag 
+                :type="scope.row.stock <= 0 ? 'danger' : scope.row.stock <= 10 ? 'warning' : 'success'" 
+                size="small"
+              >
+                {{ scope.row.stock <= 0 ? '无库存' : scope.row.stock <= 10 ? '库存紧张' : '库存充足' }}
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="color" label="颜色" width="80" />
         
         <el-table-column prop="updateTime" label="更新时间" width="180" />
@@ -131,8 +142,13 @@
             <el-button type="text" size="small" @click="editProduct(scope.row)">
               编辑
             </el-button>
-            <el-button type="text" size="small" @click="adjustStock(scope.row)">
-              调库存
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="directOrder(scope.row)"
+              style="color: #67c23a;"
+            >
+              直接开单
             </el-button>
             <el-button 
               type="text" 
@@ -175,7 +191,7 @@ const loading = ref(false);
 const searchForm = reactive({
   keyword: '',
   category: '',
-  stockStatus: ''
+  specification: ''
 });
 
 // 分页信息
@@ -191,6 +207,7 @@ const productList = ref([]);
 // 从本地存储加载商品数据
 const loadProducts = () => {
   const products = JSON.parse(localStorage.getItem('products') || '[]');
+  console.log(products);
   productList.value = products;
   pagination.total = products.length;
 };
@@ -226,19 +243,7 @@ const getCategoryText = (category: string) => {
   return textMap[category] || '未知';
 };
 
-// 获取库存状态类型
-const getStockStatusType = (stock: number, alertStock: number) => {
-  if (stock === 0) return 'danger';
-  if (stock <= alertStock) return 'warning';
-  return 'success';
-};
 
-// 获取库存状态文本
-const getStockStatusText = (stock: number, alertStock: number) => {
-  if (stock === 0) return '缺货';
-  if (stock <= alertStock) return '预警';
-  return '充足';
-};
 
 // 搜索
 const handleSearch = () => {
@@ -255,18 +260,9 @@ const handleSearch = () => {
     
     const categoryMatch = !searchForm.category || product.category === searchForm.category;
     
-    let stockStatusMatch = true;
-    if (searchForm.stockStatus) {
-      if (searchForm.stockStatus === 'out') {
-        stockStatusMatch = product.stock === 0;
-      } else if (searchForm.stockStatus === 'low') {
-        stockStatusMatch = product.stock > 0 && product.stock <= product.alertStock;
-      } else if (searchForm.stockStatus === 'normal') {
-        stockStatusMatch = product.stock > product.alertStock;
-      }
-    }
+    const specificationMatch = !searchForm.specification || product.specification === searchForm.specification;
     
-    return keywordMatch && categoryMatch && stockStatusMatch;
+    return keywordMatch && categoryMatch && specificationMatch;
   });
   
   productList.value = filteredProducts;
@@ -281,7 +277,7 @@ const handleSearch = () => {
 const resetSearch = () => {
   searchForm.keyword = '';
   searchForm.category = '';
-  searchForm.stockStatus = '';
+  searchForm.specification = '';
   loadProducts();
 };
 
@@ -299,6 +295,17 @@ const viewProduct = (product: any) => {
 const editProduct = (product: any) => {
   ElMessage.info(`编辑商品：${product.name}`);
   // 这里可以跳转到编辑页面或打开编辑弹窗
+};
+
+// 直接开单
+const directOrder = (product: any) => {
+  if (product.stock <= 0) {
+    ElMessage.warning('该商品库存不足，无法开单');
+    return;
+  }
+  console.log('直接开单，商品信息:', product);
+  console.log('商品ID:', product.id, '类型:', typeof product.id);
+  router.push(`/home/orders/create?productId=${String(product.id)}`);
 };
 
 // 调整库存
@@ -346,6 +353,12 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (current: number) => {
   pagination.current = current;
   loadProducts();
+};
+
+// 图片加载错误处理
+const handleImageError = (e: any) => {
+  console.error('图片加载失败:', e);
+  // 可以在这里设置默认图片
 };
 
 onMounted(() => {
@@ -489,6 +502,37 @@ onMounted(() => {
         
         .el-pagination__sizes {
           display: none;
+        }
+      }
+    }
+  }
+}
+
+// 移动端select下拉框位置修复
+@media (max-width: 768px) {
+  .product-list {
+    // 修复select下拉框位置
+    :deep(.el-select-dropdown) {
+      position: fixed !important;
+      z-index: 3000 !important;
+      
+      &.el-popper {
+        position: fixed !important;
+      }
+    }
+    
+    // 确保select组件在移动端正确显示
+    :deep(.el-select) {
+      .el-input {
+        position: relative;
+      }
+    }
+    
+    // 修复搜索表单中的select布局
+    .search-card {
+      .search-form {
+        .el-select {
+          width: 100% !important;
         }
       }
     }

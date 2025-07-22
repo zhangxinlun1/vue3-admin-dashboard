@@ -11,6 +11,8 @@ import CreateOrder from "@/views/orders/CreateOrder.vue";
 import OrderList from "@/views/orders/OrderList.vue";
 import ProductDetail from "@/views/inventory/ProductDetail.vue";
 import StockAdjustment from "@/views/inventory/StockAdjustment.vue";
+import ImageTest from "@/views/ImageTest.vue";
+import SimpleImageTest from "@/views/SimpleImageTest.vue";
 
 // 定义路由数组，使用自定义的 AppRouteRecordRaw 类型
 
@@ -18,7 +20,7 @@ import StockAdjustment from "@/views/inventory/StockAdjustment.vue";
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
-        redirect: '/login'
+        redirect: '/home/inventory/list'
     },
     {
         path: '/login',
@@ -27,7 +29,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/home',
         component: Home,
-        meta: { requiresAuth: true, title: '首页' },
+        meta: { requiresAuth: false, title: '首页' }, // 移除登录要求
         children: [
             {
                 path: '/home',
@@ -78,6 +80,16 @@ const routes: RouteRecordRaw[] = [
                 path: '/home/orders/list',
                 component: OrderList,
                 meta: { title: '销售记录' }
+            },
+            {
+                path: '/home/image-test',
+                component: ImageTest,
+                meta: { title: '图片测试' }
+            },
+            {
+                path: '/home/simple-image-test',
+                component: SimpleImageTest,
+                meta: { title: '简单图片测试' }
             },
         ]
     },

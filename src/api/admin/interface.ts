@@ -30,6 +30,8 @@ export interface IProduct {
 	price: number;
 	category: string;
 	stock: number;
+	specification?: string;
+	color?: string;
 	img:string;
 }
 export interface IAxiosRequestOptions {

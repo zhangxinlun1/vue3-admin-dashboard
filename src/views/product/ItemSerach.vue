@@ -433,154 +433,34 @@ const stockForm = ref({
 });
 const stockItems = ref([{ code: '', name: '', quantity: 1 ,price:0}]);
 
-// 数据
-const mockItems = [
-  {
-    id: 1,
-    code: 'ITEM-1001',
-    name: '高级无线耳机',
-    category: '电子产品',
-    brand: '索尼',
-    stock: 25,
-    price: 899.00,
-    description: '高品质无线耳机，降噪效果出色，续航时间长达30小时。'
-  },
-  {
-    id: 2,
-    code: 'ITEM-1002',
-    name: '智能手表Pro',
-    category: '电子产品',
-    brand: '苹果',
-    stock: 12,
-    price: 2599.00,
-    description: '多功能智能手表，支持心率监测、血氧检测和GPS定位。'
-  },
-  {
-    id: 3,
-    code: 'ITEM-2001',
-    name: '专业摄影相机',
-    category: '摄影器材',
-    brand: '佳能',
-    stock: 8,
-    price: 5699.00,
-    description: '全画幅数码单反相机，2410万像素，支持4K视频录制。'
-  },
-  {
-    id: 4,
-    code: 'ITEM-2002',
-    name: '广角变焦镜头',
-    category: '摄影器材',
-    brand: '尼康',
-    stock: 0,
-    price: 3299.00,
-    description: '16-35mm f/4G ED VR广角变焦镜头，适用于风景和建筑摄影。'
-  },
-  {
-    id: 5,
-    code: 'ITEM-3001',
-    name: '游戏笔记本电脑',
-    category: '电脑设备',
-    brand: '华硕',
-    stock: 18,
-    price: 8999.00,
-    description: '高性能游戏笔记本，搭载RTX 3060显卡和144Hz高刷新率屏幕。'
-  },
-  {
-    id: 6,
-    code: 'ITEM-3002',
-    name: '机械键盘',
-    category: '电脑配件',
-    brand: '樱桃',
-    stock: 30,
-    price: 599.00,
-    description: 'Cherry MX轴机械键盘，RGB背光，全键无冲。'
-  },
-  {
-    id: 7,
-    code: 'ITEM-4001',
-    name: '无线充电器',
-    category: '配件',
-    brand: '小米',
-    stock: 42,
-    price: 129.00,
-    description: '30W无线快充，支持多种设备，智能温控保护。'
-  },
-  {
-    id: 8,
-    code: 'ITEM-4002',
-    name: '移动硬盘',
-    category: '存储设备',
-    brand: '希捷',
-    stock: 15,
-    price: 699.00,
-    description: '2TB便携式移动硬盘，USB3.1接口，数据传输快速稳定。'
-  },
-  {
-    id: 9,
-    code: 'ITEM-5001',
-    name: '智能插座',
-    category: '智能家居',
-    brand: '华为',
-    stock: 22,
-    price: 89.00,
-    description: '远程控制智能插座，支持定时开关和电量统计。'
-  },
-  {
-    id: 10,
-    code: 'ITEM-5002',
-    name: '智能灯泡',
-    category: '智能家居',
-    brand: '飞利浦',
-    stock: 36,
-    price: 129.00,
-    description: '可调光色智能LED灯泡，支持语音控制和手机APP控制。'
+// 商品数据（从localStorage加载）
+const items = ref([]);
+
+// 订单数据（从localStorage加载）
+const orders = ref([]);
+
+// 入库数据（从localStorage加载）
+const stockIns = ref([]);
+
+// 从localStorage加载商品数据
+const loadItems = () => {
+  const products = JSON.parse(localStorage.getItem('products') || '[]');
+  items.value = products;
+  
+  // 加载订单数据
+  const savedOrders = localStorage.getItem('orders');
+  if (savedOrders) {
+    orders.value = JSON.parse(savedOrders);
   }
-];
-
-// 订单数据
-const orders = ref([
-  {
-    id: 'ORD-20250716001',
-    orderNumber: 'ORD-20250716001',
-    customerName: '张三',
-    contact: '13800138001',
-    items: [
-      {code: 'ITEM-1001', name: '高级无线耳机', price: 899.00, quantity: 2}
-    ],
-    totalAmount: 1798.00,
-    createdAt: new Date('2025-07-16T09:30:00')
-  },
-  {
-    id: 'ORD-20250716002',
-    orderNumber: 'ORD-20250716002',
-    customerName: '李四',
-    contact: '13900139001',
-    items: [
-      {code: 'ITEM-3001', name: '游戏笔记本电脑', price: 8999.00, quantity: 1},
-      {code: 'ITEM-3002', name: '机械键盘', price: 599.00, quantity: 1}
-    ],
-    totalAmount: 9598.00,
-    createdAt: new Date('2025-07-16T11:15:00')
+  
+  // 加载入库数据
+  const savedStockIns = localStorage.getItem('stockIns');
+  if (savedStockIns) {
+    stockIns.value = JSON.parse(savedStockIns);
   }
-]);
+};
 
-// 入库数据
-const stockIns = ref([
-  {
-    id: 'STK-20250716001',
-    items: [
-      {code: 'ITEM-1001', name: '高级无线耳机', quantity: 10},
-      {code: 'ITEM-1002', name: '智能手表Pro', quantity: 5}
-    ],
-    createdAt: new Date('2025-07-16T10:00:00')
-  }
-]);
-
-// 图表实例
-let revenueChart = null;
-let topSellingChart = null;
-
-// 模拟搜索函数
+// 搜索函数
 const searchItem = async () => {
   if (!searchQuery.value.trim()) {
     errorMessage.value = '请输入要搜索的货号';
@@ -594,9 +474,9 @@ const searchItem = async () => {
   try {
     // 模拟API请求延迟
     await new Promise(resolve => setTimeout(resolve, 800));
-  console.log(mockItems)
-    // 实际项目中这里会调用API
-    const results = mockItems.filter(item =>
+    
+    // 从真实数据中搜索
+    const results = items.value.filter(item =>
         item.code.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
 
@@ -649,7 +529,7 @@ const removeOrderItem = (index) => {
 const updateOrderItemInfo = (index) => {
   const item = orderItems.value[index];
   if (item.code) {
-    const matchedItem = mockItems.find(i => i.code === item.code);
+    const matchedItem = items.value.find(i => i.code === item.code);
     if (matchedItem) {
       orderItems.value[index] = {
         ...orderItems.value[index],
@@ -701,13 +581,19 @@ const createOrder = async () => {
 
     orders.value.push(newOrder);
 
+    // 保存订单数据到localStorage
+    localStorage.setItem('orders', JSON.stringify(orders.value));
+
     // 更新库存
     newOrder.items.forEach(item => {
-      const stockItem = mockItems.find(i => i.code === item.code);
+      const stockItem = items.value.find(i => i.code === item.code);
       if (stockItem) {
         stockItem.stock -= item.quantity;
       }
     });
+
+    // 保存更新后的商品数据到localStorage
+    localStorage.setItem('products', JSON.stringify(items.value));
 
     alert('订单创建成功！');
     console.log("当前订单",newOrder)
@@ -735,7 +621,7 @@ const removeStockItem = (index) => {
 const updateStockItemInfo = (index) => {
   const item = stockItems.value[index];
   if (item.code) {
-    const matchedItem = mockItems.find(i => i.code === item.code);
+    const matchedItem = items.value.find(i => i.code === item.code);
     if (matchedItem) {
       stockItems.value[index] = {
         ...stockItems.value[index],
@@ -778,18 +664,21 @@ const createStock = async () => {
 
     stockIns.value.push(newStockIn);
 
+    // 保存入库数据到localStorage
+    localStorage.setItem('stockIns', JSON.stringify(stockIns.value));
+
     // 更新库存
     newStockIn.items.forEach(item => {
-      const stockItem = mockItems.find(i => i.code === item.code);
+      const stockItem = items.value.find(i => i.code === item.code);
       if (stockItem) {
         stockItem.stock += item.quantity;
       } else {
         // 添加新商品
-        mockItems.push({
-          id: mockItems.length + 1,
+        items.value.push({
+          id: items.value.length + 1,
           code: item.code,
           name: item.name,
-          category: '未知',
+          category: '其他',
           brand: '未知',
           stock: item.quantity,
           price: item.price,
@@ -797,6 +686,9 @@ const createStock = async () => {
         });
       }
     });
+
+    // 保存更新后的商品数据到localStorage
+    localStorage.setItem('products', JSON.stringify(items.value));
 
     alert('入库成功！');
     resetStock();
@@ -834,7 +726,7 @@ const getTodayOrderCount = () => {
 };
 
 const getTotalStock = () => {
-  return mockItems.reduce((total, item) => total + item.stock, 0);
+  return items.value.reduce((total, item) => total + item.stock, 0);
 };
 
 const getTodayRevenueGrowth = () => {
@@ -977,12 +869,8 @@ const clearSearch = () => {
 
 // 初始化
 onMounted(() => {
+  loadItems(); // 加载商品数据
   initCharts();
-
-  // 监听订单变化，更新今日订单
-  watch(orders, () => {
-    todayOrders.value = getTodayOrders();
-  });
 });
 </script>
 

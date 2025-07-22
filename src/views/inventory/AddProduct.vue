@@ -51,11 +51,19 @@
             </el-form-item>
             
             <el-form-item label="商品规格" prop="specification">
-              <el-input 
+              <el-select 
                 v-model="form.specification" 
-                placeholder="如：S/M/L/XL/XXL"
+                placeholder="请选择商品规格"
                 size="large"
-              />
+                style="width: 100%"
+              >
+                <el-option label="S" value="S" />
+                <el-option label="M" value="M" />
+                <el-option label="L" value="L" />
+                <el-option label="XL" value="XL" />
+                <el-option label="XXL" value="XXL" />
+                <el-option label="均码" value="ONE_SIZE" />
+              </el-select>
             </el-form-item>
           </div>
         </div>
@@ -66,23 +74,27 @@
             <el-form-item label="进货价格" prop="costPrice">
               <el-input-number 
                 v-model="form.costPrice" 
+                :min="0" 
                 :precision="2"
-                :min="0"
-                placeholder="进货价格"
+                placeholder="请输入进货价格"
                 size="large"
                 style="width: 100%"
-              />
+              >
+                <template #prefix>¥</template>
+              </el-input-number>
             </el-form-item>
             
             <el-form-item label="销售价格" prop="salePrice">
               <el-input-number 
                 v-model="form.salePrice" 
+                :min="0" 
                 :precision="2"
-                :min="0"
-                placeholder="销售价格"
+                placeholder="请输入销售价格"
                 size="large"
                 style="width: 100%"
-              />
+              >
+                <template #prefix>¥</template>
+              </el-input-number>
             </el-form-item>
           </div>
           
@@ -90,21 +102,33 @@
             <el-form-item label="库存数量" prop="stock">
               <el-input-number 
                 v-model="form.stock" 
-                :min="0"
-                placeholder="库存数量"
+                :min="1" 
+                :precision="0"
+                placeholder="请输入库存数量"
                 size="large"
                 style="width: 100%"
               />
+              <span class="stock-hint">默认1件，可点击增加</span>
             </el-form-item>
             
-            <el-form-item label="预警数量" prop="alertStock">
-              <el-input-number 
-                v-model="form.alertStock" 
-                :min="0"
-                placeholder="预警数量"
+            <el-form-item label="商品颜色" prop="color">
+              <el-select 
+                v-model="form.color" 
+                placeholder="请选择商品颜色"
                 size="large"
                 style="width: 100%"
-              />
+              >
+                <el-option label="白色" value="白色" />
+                <el-option label="黑色" value="黑色" />
+                <el-option label="红色" value="红色" />
+                <el-option label="蓝色" value="蓝色" />
+                <el-option label="绿色" value="绿色" />
+                <el-option label="黄色" value="黄色" />
+                <el-option label="粉色" value="粉色" />
+                <el-option label="紫色" value="紫色" />
+                <el-option label="灰色" value="灰色" />
+                <el-option label="其他" value="其他" />
+              </el-select>
             </el-form-item>
           </div>
         </div>
@@ -147,26 +171,7 @@
           </el-form-item>
         </div>
         
-        <div class="form-section">
-          <h3>商品信息</h3>
-          <div class="form-row">
-            <el-form-item label="品牌" prop="brand">
-              <el-input 
-                v-model="form.brand" 
-                placeholder="请输入品牌名称"
-                size="large"
-              />
-            </el-form-item>
-            
-            <el-form-item label="颜色" prop="color">
-              <el-input 
-                v-model="form.color" 
-                placeholder="请输入商品颜色"
-                size="large"
-              />
-            </el-form-item>
-          </div>
-        </div>
+
         
         <div class="form-actions">
           <el-button @click="resetForm" size="large">重置</el-button>
@@ -199,11 +204,9 @@ const form = reactive({
   specification: '',
   costPrice: 0,
   salePrice: 0,
-  stock: 0,
-  alertStock: 10,
   description: '',
-  brand: '',
   color: '',
+  stock: 1, // 默认库存为1
   images: [] as string[]
 });
 
@@ -211,7 +214,27 @@ const form = reactive({
 const fileList = ref<UploadUserFile[]>([]);
 
 // 上传配置
-const uploadUrl = 'http://localhost:3333/api/upload';
+const uploadUrl = ref('');
+
+// 动态设置上传URL
+const setUploadUrl = () => {
+  // 获取当前页面的协议和主机
+  const protocol = window.location.protocol;
+  const host = window.location.hostname;
+  const port = '3333'; // 后端端口
+  
+  // 如果是localhost，尝试使用IP地址
+  if (host === 'localhost' || host === '127.0.0.1') {
+    // 在移动端，使用当前页面的IP地址
+    uploadUrl.value = `${protocol}//${window.location.hostname}:${port}/files/upload`;
+  } else {
+    // 使用当前页面的主机地址
+    uploadUrl.value = `${protocol}//${host}:${port}/files/upload`;
+  }
+  
+  console.log('设置上传URL:', uploadUrl.value);
+};
+
 const uploadHeaders = {
   // 如果需要认证，在这里添加 token
 };
@@ -236,12 +259,15 @@ const rules = {
     { required: true, message: '请输入销售价格', trigger: 'blur' },
     { type: 'number' as const, min: 0, message: '价格不能为负数', trigger: 'blur' }
   ],
+  specification: [
+    { required: true, message: '请选择商品规格', trigger: 'change' }
+  ],
+  color: [
+    { required: true, message: '请选择商品颜色', trigger: 'change' }
+  ],
   stock: [
     { required: true, message: '请输入库存数量', trigger: 'blur' },
-    { type: 'number' as const, min: 0, message: '库存不能为负数', trigger: 'blur' }
-  ],
-  brand: [
-    { required: true, message: '请输入品牌名称', trigger: 'blur' }
+    { type: 'number' as const, min: 1, message: '库存数量不能少于1件', trigger: 'blur' }
   ]
 };
 
@@ -263,13 +289,42 @@ const beforeUpload: UploadProps['beforeUpload'] = (file) => {
 
 // 上传成功
 const handleUploadSuccess: UploadProps['onSuccess'] = (response, file) => {
-  ElMessage.success('图片上传成功');
-  form.images.push(response.url || file.url || '');
+  console.log('上传响应:', response);
+  console.log('文件信息:', file);
+  
+  if (response && response.data && response.data.url) {
+    // 使用返回的URL（可能是七牛云或本地存储）
+    form.images.push(response.data.url);
+    console.log('图片URL:', response.data.url);
+    console.log('存储类型:', response.data.storage);
+    ElMessage.success(`图片上传成功！存储方式: ${response.data.storage}`);
+  } else {
+    ElMessage.error('图片上传失败，请重试');
+  }
 };
 
 // 上传失败
-const handleUploadError: UploadProps['onError'] = () => {
-  ElMessage.error('图片上传失败，请重试');
+const handleUploadError: UploadProps['onError'] = (error, file) => {
+  console.error('上传失败:', error);
+  console.error('文件信息:', file);
+  
+  let errorMessage = '图片上传失败，请重试';
+  
+  // 根据错误类型提供更具体的错误信息
+  if (error && typeof error === 'object') {
+    const errorObj = error as any;
+    if (errorObj.status === 0) {
+      errorMessage = '网络连接失败，请检查网络连接';
+    } else if (errorObj.status === 413) {
+      errorMessage = '文件太大，请选择小于5MB的图片';
+    } else if (errorObj.status === 500) {
+      errorMessage = '服务器错误，请稍后重试';
+    } else if (errorObj.status === 404) {
+      errorMessage = '上传接口不存在，请联系管理员';
+    }
+  }
+  
+  ElMessage.error(errorMessage);
 };
 
 // 提交表单
@@ -293,6 +348,8 @@ const submitForm = async () => {
     const product = {
       id: productId,
       ...form,
+      // 使用第一张图片作为主图
+      img: form.images.length > 0 ? form.images[0] : '',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString(),
       soldCount: 0,
@@ -325,7 +382,7 @@ const submitForm = async () => {
 const updateStats = () => {
   const products = JSON.parse(localStorage.getItem('products') || '[]');
   const totalProducts = products.length;
-  const totalStock = products.reduce((sum: number, product: any) => sum + product.stock, 0);
+  const totalStock = products.reduce((sum: number, product: any) => sum + (product.stock || 0), 0);
   const totalValue = products.reduce((sum: number, product: any) => sum + (product.stock * product.costPrice), 0);
   
   localStorage.setItem('stats', JSON.stringify({
@@ -338,25 +395,21 @@ const updateStats = () => {
 
 // 重置表单
 const resetForm = () => {
-  if (!formRef.value) return;
-  
-  ElMessageBox.confirm(
-    '确定要重置表单吗？所有已填写的信息将被清空。',
-    '确认重置',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(() => {
-    formRef.value?.resetFields();
-    fileList.value = [];
-    form.images = [];
-    ElMessage.success('表单已重置');
-  }).catch(() => {
-    // 用户取消
-  });
+  if (formRef.value) {
+    formRef.value.resetFields();
+  }
+  // 手动重置库存数量为默认值
+  form.stock = 1;
+  form.images = [];
+  fileList.value = [];
 };
+
+// 组件挂载时初始化
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  setUploadUrl();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -474,6 +527,14 @@ const resetForm = () => {
       min-width: 120px;
     }
   }
+  
+  .stock-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6c757d;
+    text-align: right;
+  }
 }
 
 // 响应式设计
@@ -490,34 +551,73 @@ const resetForm = () => {
     }
   }
   
-  .product-form {
-    .form-section {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    .form-actions {
-      flex-direction: column;
-      align-items: center;
-      
-      .el-button {
-        width: 100%;
-        max-width: 300px;
-      }
-    }
-    
-    .upload-area {
-      .product-upload {
-        :deep(.el-upload--picture-card) {
-          width: 100px;
-          height: 100px;
+  .form-card {
+    .product-form {
+      .form-section {
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 16px;
         }
-        
-        :deep(.el-upload-list--picture-card) {
-          .el-upload-list__item {
+      }
+      
+      .upload-area {
+        .product-upload {
+          :deep(.el-upload--picture-card) {
             width: 100px;
             height: 100px;
+          }
+          
+          :deep(.el-upload-list--picture-card) {
+            .el-upload-list__item {
+              width: 100px;
+              height: 100px;
+            }
+          }
+        }
+      }
+      
+      .form-actions {
+        flex-direction: column;
+        gap: 12px;
+        
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+// 移动端select下拉框位置修复
+@media (max-width: 768px) {
+  .add-product {
+    // 修复select下拉框位置
+    :deep(.el-select-dropdown) {
+      position: fixed !important;
+      z-index: 3000 !important;
+      
+      &.el-popper {
+        position: fixed !important;
+      }
+    }
+    
+    // 确保select组件在移动端正确显示
+    :deep(.el-select) {
+      .el-input {
+        position: relative;
+      }
+    }
+    
+    // 修复移动端键盘弹出时的布局
+    .form-card {
+      .product-form {
+        .form-section {
+          .form-row {
+            .el-form-item {
+              .el-select {
+                width: 100% !important;
+              }
+            }
           }
         }
       }

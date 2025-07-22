@@ -22,7 +22,9 @@ export const requestHandlers: Record<string, Record<string, () => Promise<IAxios
                         price: 29.99,
                         category: 'T-shirt',
                         stock: 50,
-                        img:"https://p3-search.byteimg.com/img/labis/6aba3b5098369b44c45499ad7541d7e0~480x480.JPEG"
+                        specification: 'M',
+                        color: '白色',
+                        img:"http://img.fznbd.xin/70852958-cfae-4257-9ae8-37d91ab3a496.webp"
                     },
                     {
                         id: 2,
@@ -31,7 +33,9 @@ export const requestHandlers: Record<string, Record<string, () => Promise<IAxios
                         price: 79.99,
                         category: 'Jeans',
                         stock: 30,
-                        img:"https://p3-search.byteimg.com/img/labis/5663098d614cd067579878c123fc00fc~480x480.JPEG"
+                        specification: 'L',
+                        color: '蓝色',
+                        img:"http://img.fznbd.xin/70852958-cfae-4257-9ae8-37d91ab3a496.webp"
                     },
                     {
                         id: 3,
@@ -40,7 +44,9 @@ export const requestHandlers: Record<string, Record<string, () => Promise<IAxios
                         price: 129.99,
                         category: 'Dress',
                         stock: 20,
-                        img:"https://p3-search.byteimg.com/img/labis/f1b1e947d8f8bf39ab7d4ec37532bae2~480x480.JPEG"
+                        specification: 'S',
+                        color: '黑色',
+                        img:"http://img.fznbd.xin/70852958-cfae-4257-9ae8-37d91ab3a496.webp"
                     },
                 ];
             return Promise.resolve({ status: 200, data: mockProducts, message: '获取产品数据成功' });

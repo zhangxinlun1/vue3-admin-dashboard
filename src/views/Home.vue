@@ -1,12 +1,21 @@
 <template>
   <el-container class="home-container">
     <!-- 侧边栏 -->
-    <el-aside width="260px" class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }">
+    <el-aside width="260px" class="sidebar" :class="{ 'sidebar-collapsed': isMobile && isCollapsed }">
       <div class="sidebar-header">
         <div class="logo">
           <el-icon class="logo-icon"><DataBoard /></el-icon>
           <span class="logo-text">七哥店铺管理系统</span>
         </div>
+        <!-- 移动端收起按钮 -->
+        <el-button 
+          v-if="isMobile" 
+          type="text" 
+          @click="toggleSidebar"
+          class="mobile-close-btn"
+        >
+          <el-icon><Close /></el-icon>
+        </el-button>
       </div>
       
       <el-menu
@@ -16,6 +25,7 @@
         background-color="#1a1a2e"
         text-color="#ffffff"
         active-text-color="#ff6b6b"
+        @select="handleMenuSelect"
       >
         <el-menu-item index="/home/dashboard" class="menu-item">
           <el-icon><DataBoard /></el-icon>
@@ -74,22 +84,29 @@
       </el-menu>
     </el-aside>
     
+    <!-- 移动端遮罩层 -->
+    <div 
+      v-if="isMobile && isCollapsed" 
+      class="mobile-overlay"
+      @click="toggleSidebar"
+    ></div>
+    
     <el-container>
       <!-- 顶部导航栏 -->
-                        <el-header height="70px" class="header">
-                    <div class="header-left">
-                      <el-button 
-                        type="text" 
-                        @click="toggleSidebar"
-                        class="sidebar-toggle"
-                      >
-                        <el-icon><Fold v-if="!isCollapsed" /><Expand v-else /></el-icon>
-                      </el-button>
-                      <el-breadcrumb separator="/" class="breadcrumb">
-                        <el-breadcrumb-item :to="{ path: '/home/dashboard' }">首页</el-breadcrumb-item>
-                        <el-breadcrumb-item>{{ $route.meta?.title || '数据概览' }}</el-breadcrumb-item>
-                      </el-breadcrumb>
-                    </div>
+      <el-header height="70px" class="header">
+        <div class="header-left">
+          <el-button 
+            type="text" 
+            @click="toggleSidebar"
+            class="sidebar-toggle"
+          >
+            <el-icon><Fold v-if="!isCollapsed" /><Expand v-else /></el-icon>
+          </el-button>
+          <el-breadcrumb separator="/" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/home/dashboard' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $route.meta?.title || '数据概览' }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
         
         <div class="header-right">
           <div class="header-actions">
@@ -122,7 +139,7 @@
       </el-header>
       
       <!-- 主要内容区域 -->
-      <el-main class="main">
+      <el-main class="main" @click="handleMainClick">
         <router-view></router-view>
       </el-main>
     </el-container>
@@ -130,18 +147,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
   DataBoard, Box, Plus, List, Document, Edit, 
   Tickets, TrendCharts, Money, PieChart, Setting, Bell, 
-  ArrowDown, User, SwitchButton, Expand, Fold 
+  ArrowDown, User, SwitchButton, Expand, Fold, Close 
 } from "@element-plus/icons-vue";
 import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 
 const isCollapsed = ref(false);
+const isMobile = ref(window.innerWidth <= 1024); // 改为1024px，包含iPad
+
+// 根据设备类型设置默认状态
+const setInitialSidebarState = () => {
+  if (window.innerWidth <= 1024) {
+    // 移动端和平板端默认隐藏侧边栏
+    isCollapsed.value = false; // false表示隐藏侧边栏
+  } else {
+    // 桌面端默认显示侧边栏（不使用这个状态）
+    isCollapsed.value = false;
+  }
+};
 
 const logout = () => {
   ElMessage.success('退出登录成功');
@@ -158,8 +187,64 @@ const showNotification = () => {
 };
 
 const toggleSidebar = () => {
+  console.log('切换侧边栏，当前状态:', isCollapsed.value);
+  console.log('设备类型:', isMobile.value ? '移动端' : '桌面端');
+  console.log('窗口宽度:', window.innerWidth);
   isCollapsed.value = !isCollapsed.value;
+  console.log('切换后状态:', isCollapsed.value);
 };
+
+const handleMenuSelect = (index: string) => {
+  // 在移动端和平板端点击菜单项后自动关闭侧边栏
+  if (window.innerWidth <= 1024 && isCollapsed.value) {
+    isCollapsed.value = false;
+  }
+};
+
+const handleMainClick = () => {
+  // 在移动端和平板端点击主内容区域时关闭侧边栏
+  if (window.innerWidth <= 1024 && isCollapsed.value) {
+    isCollapsed.value = false;
+  }
+};
+
+// 监听窗口大小变化
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth <= 1024; // 改为1024px
+};
+
+// 组件挂载时和窗口大小变化时更新
+onMounted(() => {
+  updateIsMobile();
+  setInitialSidebarState();
+  window.addEventListener('resize', updateIsMobile);
+  
+  // 移动端视口高度处理
+  if (window.innerWidth <= 1024) { // 改为1024px，包含iPad
+    // 设置视口高度
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    setViewportHeight();
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', setViewportHeight);
+    
+    // 处理键盘弹出时的视口变化
+    let initialViewportHeight = window.innerHeight;
+    window.addEventListener('resize', () => {
+      const currentHeight = window.innerHeight;
+      if (currentHeight < initialViewportHeight) {
+        // 键盘弹出，保持当前高度
+        document.body.style.height = `${currentHeight}px`;
+      } else {
+        // 键盘收起，恢复原始高度
+        document.body.style.height = '';
+      }
+    });
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -167,6 +252,17 @@ const toggleSidebar = () => {
   height: 100vh;
   display: flex;
   overflow: hidden;
+  
+  &.sidebar-open {
+    .sidebar {
+      transform: translateX(0);
+    }
+    &::after {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  }
 }
 
 .sidebar {
@@ -175,10 +271,14 @@ const toggleSidebar = () => {
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  width: 260px;
   
   .sidebar-header {
     padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     
     .logo {
       display: flex;
@@ -194,6 +294,15 @@ const toggleSidebar = () => {
         font-size: 18px;
         font-weight: 600;
         color: #ffffff;
+      }
+    }
+    
+    .mobile-close-btn {
+      color: #ffffff;
+      font-size: 20px;
+      
+      &:hover {
+        color: #ff6b6b;
       }
     }
   }
@@ -292,7 +401,7 @@ const toggleSidebar = () => {
       font-size: 20px;
       color: #6c757d;
       
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
         display: block;
       }
     }
@@ -300,7 +409,7 @@ const toggleSidebar = () => {
     .breadcrumb {
       font-size: 14px;
       
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
         display: none;
       }
       
@@ -384,20 +493,23 @@ const toggleSidebar = () => {
   }
 }
 
-// 移动端适配
-@media (max-width: 768px) {
+// 移动端和平板端适配
+@media (max-width: 1024px) {
   .home-container {
+    position: relative;
+    
     .sidebar {
       position: fixed;
       left: 0;
       top: 0;
       height: 100vh;
       z-index: 1000;
-      transform: translateX(-100%);
+      transform: translateX(-100%); // 默认隐藏
       transition: transform 0.3s ease;
       
       &.sidebar-collapsed {
-        transform: translateX(0);
+        transform: translateX(0); // 显示侧边栏
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3); // 添加阴影效果
       }
     }
     
@@ -427,6 +539,79 @@ const toggleSidebar = () => {
     .main {
       padding: 16px;
     }
+  }
+}
+
+// 桌面端显示侧边栏
+@media (min-width: 1025px) {
+  .home-container {
+    .sidebar {
+      position: relative;
+      transform: none !important;
+      transition: none;
+      width: 260px !important;
+      
+      &.sidebar-collapsed {
+        transform: none !important;
+      }
+    }
+    
+    .header {
+      .sidebar-toggle {
+        display: none;
+      }
+    }
+  }
+}
+
+// 移动端遮罩层样式
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  cursor: pointer;
+}
+
+// 移动端select下拉框位置修复
+@media (max-width: 768px) {
+  // 固定视口高度，防止键盘弹出时页面跳动
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .home-container {
+    height: 100vh;
+    height: -webkit-fill-available; // iOS Safari支持
+  }
+  
+  // 修复select下拉框位置
+  :deep(.el-select-dropdown) {
+    position: fixed !important;
+    z-index: 3000 !important;
+    
+    &.el-popper {
+      position: fixed !important;
+    }
+  }
+  
+  // 确保下拉框在正确位置显示
+  :deep(.el-select) {
+    .el-input {
+      position: relative;
+    }
+  }
+  
+  // 修复移动端键盘弹出时的布局问题
+  .main {
+    height: calc(100vh - 70px);
+    height: calc(-webkit-fill-available - 70px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
