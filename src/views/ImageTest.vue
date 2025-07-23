@@ -174,16 +174,16 @@ const currentQuery = ref('');
 
 // 加载商品数据
 const loadProductData = () => {
-  const storedProducts = JSON.parse(localStorage.getItem('products') || '[]');
-  products.value = storedProducts;
-  productCount.value = storedProducts.length;
-  availableProductCount.value = storedProducts.filter((p) => p.stock > 0).length;
+  // 暂时使用空数组，因为现在使用后端API
+  products.value = [];
+  productCount.value = 0;
+  availableProductCount.value = 0;
   
   // 获取当前URL参数
   const urlParams = new URLSearchParams(window.location.search);
   currentQuery.value = urlParams.toString();
   
-  console.log('商品数据:', storedProducts);
+  console.log('商品数据:', products.value);
   console.log('URL参数:', currentQuery.value);
 };
 

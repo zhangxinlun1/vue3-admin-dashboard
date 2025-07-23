@@ -1,53 +1,89 @@
-// 引入模拟的makeRequest函数
-import {makeRequest} from "./mockRequest"
+// 引入真实的axios请求
+import axios from 'axios';
 import {HttpMethods, IAxiosResponse, IProduct} from "./interface";
+
+// 创建axios实例
+const api = axios.create({
+  baseURL: 'http://localhost:3333',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // 获取商品列表
-// export const getProducts = (): Promise<IAxiosResponse<IProduct[]>> => {
-// 	return makeRequest({
-// 		method: HttpMethods.GET,
-// 		url: '/api/admin/products'
-// 	}).catch((error) => {
-// 		console.error('获取产品数据出现错误:', error);
-// 		// 可以根据具体需求，决定是抛出自定义的错误，还是返回一个特定的默认响应结构来表示错误情况
-// 		return Promise.resolve({ status: 500, data: [], message: '获取产品数据失败' });
-// 	});
-// };
-export const getProducts = async ():Promise<IAxiosResponse<IProduct[] | [] | string>>  => {
-	return makeRequest({
-		method: HttpMethods.GET,
-		url: '/api/admin/products'
-	}).catch((error) => {
-		console.error('获取产品数据出现错误:', error);
-		// 创建一个空的IProduct[]类型数据作为错误时的返回
-		const errorProducts: IProduct[] = [];
-		return Promise.resolve({ status: 500, data: errorProducts, message: '获取产品数据失败' });
-	});
+export const getProducts = async (): Promise<IAxiosResponse<IProduct[] | [] | string>> => {
+  try {
+    const response = await api.get('/product');
+    return {
+      status: response.status,
+      data: response.data,
+      message: '获取产品数据成功'
+    };
+  } catch (error) {
+    console.error('获取产品数据出现错误:', error);
+    const errorProducts: IProduct[] = [];
+    return { status: 500, data: errorProducts, message: '获取产品数据失败' };
+  }
 };
+
+// 根据ID获取单个商品
+export const getProductById = async (productId: number): Promise<IAxiosResponse<IProduct>> => {
+  try {
+    const response = await api.get(`/product/${productId}`);
+    return {
+      status: response.status,
+      data: response.data,
+      message: '获取商品详情成功'
+    };
+  } catch (error) {
+    console.error('获取商品详情失败:', error);
+    throw error;
+  }
+};
+
 // 添加商品
-export const addProduct = (product:IProduct) => {
-	return makeRequest({
-		method: HttpMethods.POST,
-		url: '/api/admin/products',
-		params: {},
-		data: product
-	});
+export const addProduct = async (product: IProduct): Promise<IAxiosResponse<any>> => {
+  try {
+    const response = await api.post('/product', product);
+    return {
+      status: response.status,
+      data: response.data,
+      message: '添加商品成功'
+    };
+  } catch (error) {
+    console.error('添加商品失败:', error);
+    throw error;
+  }
 };
 
 // 更新商品
-export const updateProduct = (product:IProduct) => {
-	const {id, ...updateData} = product;
-	return makeRequest({
-		method: HttpMethods.POST,
-		url: `/api/admin/products/${id}`,
-		params: {},
-		data: updateData
-	});
+export const updateProduct = async (product: IProduct): Promise<IAxiosResponse<any>> => {
+  try {
+    const {id, ...updateData} = product;
+    const response = await api.put(`/product/${id}`, updateData);
+    return {
+      status: response.status,
+      data: response.data,
+      message: '更新商品成功'
+    };
+  } catch (error) {
+    console.error('更新商品失败:', error);
+    throw error;
+  }
 };
 
 // 删除商品
-export const deleteProduct = (productId:IProduct) => {
-	return makeRequest({
-		method:HttpMethods.DELETE,
-		url:`/api/admin/products/${productId}`
-	});
+export const deleteProduct = async (productId: number): Promise<IAxiosResponse<any>> => {
+  try {
+    const response = await api.delete(`/product/${productId}`);
+    return {
+      status: response.status,
+      data: response.data,
+      message: '删除商品成功'
+    };
+  } catch (error) {
+    console.error('删除商品失败:', error);
+    throw error;
+  }
 };

@@ -101,7 +101,8 @@ import {ref, reactive, onMounted, computed} from 'vue';
 import AddProductModal from './AddProductModal.vue';
 import EditProductModal from './EditProductModal.vue';
 import OrderModal from './OrderModal.vue';
-import {getProducts} from "@/api/admin/products.ts";
+import {getProducts, addProduct, updateProduct, deleteProduct} from "@/api/admin/products.ts";
+import {createOrder, getOrders} from "@/api/admin/orders.ts";
 import ItemSerach from "@/views/product/ItemSerach.vue";
 import { ElMessage } from 'element-plus';
 
@@ -141,57 +142,54 @@ const totalProducts = computed(() => Products.value.length);
 // 获取商品列表
 onMounted(async () => {
   try {
-    await getProducts().then((res) => {
-      Products.value = res.data || [];
-    });
-    console.log(Products.value);
+    const productsRes = await getProducts();
+    Products.value = productsRes.data || [];
+    console.log('商品列表:', Products.value);
     
-    // 从本地存储加载订单数据
-    const savedOrders = localStorage.getItem('orders');
-    if (savedOrders) {
-      orders.value = JSON.parse(savedOrders);
-    }
+    // 获取订单数据
+    const ordersRes = await getOrders();
+    orders.value = ordersRes.data || [];
+    console.log('订单列表:', orders.value);
   } catch (error) {
-    console.error('获取商品列表失败', error);
+    console.error('获取数据失败', error);
     showErrorDialog.value = true;
-    errorMessage.value = '获取商品列表时出现错误，请稍后重试';
+    errorMessage.value = '获取数据时出现错误，请检查网络连接后重试';
   }
 });
 
 const addProducts = async (newProduct) => {
-  // try {
-  //   console.log({newProduct})
-  //   return
-  //
-  //   const result = await addProduct(newProduct);
-  //   if (result.status === 201) {
-  //     // 重新获取商品列表
-  //     const newResult = await getProducts();
-  //     products.value = newResult.data;
-  //     showAddProductModal.value = false;
-  //   }
-  // } catch (error) {
-  //   console.error('添加商品失败', error);
-  //   showErrorDialog.value = true;
-  //   errorMessage.value = '添加商品时出现错误，请检查输入信息后重试';
-  // }
+  try {
+    const result = await addProduct(newProduct);
+    if (result.status === 201) {
+      // 重新获取商品列表
+      const newResult = await getProducts();
+      Products.value = newResult.data;
+      dialogFormVisible.value = false;
+      ElMessage.success('添加商品成功');
+    }
+  } catch (error) {
+    console.error('添加商品失败', error);
+    showErrorDialog.value = true;
+    errorMessage.value = '添加商品时出现错误，请检查输入信息后重试';
+  }
 };
 const popOpen = () => {
   showAddProductModal.value = true
   console.log('popstate')
 }
 const deleteProducts = async (productId) => {
-  // try {
-  //   const result = await deleteProduct(productId);
-  //   if (result.status === 204) {
-  //     const newResult = await getProducts();
-  //     products.value = newResult.data;
-  //   }
-  // } catch (error) {
-  //   console.error('删除商品失败', error);
-  //   showErrorDialog.value = true;
-  //   errorMessage.value = '删除商品时出现错误，请稍后重试';
-  // }
+  try {
+    const result = await deleteProduct(productId);
+    if (result.status === 200 || result.status === 204) {
+      const newResult = await getProducts();
+      Products.value = newResult.data;
+      ElMessage.success('删除商品成功');
+    }
+  } catch (error) {
+    console.error('删除商品失败', error);
+    showErrorDialog.value = true;
+    errorMessage.value = '删除商品时出现错误，请稍后重试';
+  }
 };
 // 开单相关函数
 const openOrderModal = (product) => {
@@ -199,20 +197,46 @@ const openOrderModal = (product) => {
   showOrderModal.value = true;
 };
 
-const handleOrderConfirm = (orderData) => {
-  // 添加订单到列表
-  orders.value.push(orderData);
-  
-  // 更新商品库存
-  const productIndex = Products.value.findIndex(p => p.id === orderData.productId);
-  if (productIndex !== -1) {
-    Products.value[productIndex].stock = (Products.value[productIndex].stock || 0) - orderData.quantity;
+const handleOrderConfirm = async (orderData) => {
+  try {
+    // 创建订单到后端
+    const orderPayload = {
+      orderNumber: `ORD${Date.now()}`,
+      customerName: orderData.customerName || '匿名客户',
+      customerPhone: orderData.customerPhone || '',
+      totalAmount: orderData.totalAmount,
+      profit: orderData.profit || 0,
+      status: 'completed',
+      remark: orderData.remark || '',
+      items: [{
+        productId: orderData.productId,
+        quantity: orderData.quantity,
+        price: orderData.price,
+        costPrice: orderData.costPrice || 0,
+        totalPrice: orderData.totalAmount,
+        profit: orderData.profit || 0
+      }]
+    };
+    
+    const result = await createOrder(orderPayload);
+    
+    if (result.status === 201) {
+      // 重新获取订单列表以显示最新数据
+      const ordersRes = await getOrders();
+      orders.value = ordersRes.data || [];
+      
+      // 重新获取商品列表以显示更新后的库存
+      const productsRes = await getProducts();
+      Products.value = productsRes.data || [];
+      
+      ElMessage.success(`开单成功！营业额增加 ¥${orderData.totalAmount}`);
+    } else {
+      ElMessage.error('开单失败，请重试');
+    }
+  } catch (error) {
+    console.error('开单失败:', error);
+    ElMessage.error('开单失败，请检查网络连接后重试');
   }
-  
-  // 保存订单数据到本地存储
-  localStorage.setItem('orders', JSON.stringify(orders.value));
-  
-  ElMessage.success(`开单成功！营业额增加 ¥${orderData.totalAmount}`);
 };
 
 const editProduct = (product) => {
@@ -221,18 +245,19 @@ const editProduct = (product) => {
 };
 
 const updateProducts = async (updatedProduct) => {
-  // try {
-  //   const result = await updateProduct(updatedProduct);
-  //   if (result.status === 200) {
-  //     const newResult = await getProducts();
-  //     products.value = newResult.data;
-  //     showEditProductModal.value = false;
-  //   }
-  // } catch (error) {
-  //   console.error('更新商品失败', error);
-  //   showErrorDialog.value = true;
-  //   errorMessage.value = '更新商品时出现错误，请检查输入信息后重试';
-  // }
+  try {
+    const result = await updateProduct(updatedProduct);
+    if (result.status === 200) {
+      const newResult = await getProducts();
+      Products.value = newResult.data;
+      showEditProductModal.value = false;
+      ElMessage.success('更新商品成功');
+    }
+  } catch (error) {
+    console.error('更新商品失败', error);
+    showErrorDialog.value = true;
+    errorMessage.value = '更新商品时出现错误，请检查输入信息后重试';
+  }
 };
 </script>
 

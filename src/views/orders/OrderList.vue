@@ -118,6 +118,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
+import { getOrders } from '@/api/admin/orders';
 
 const router = useRouter();
 const loading = ref(false);
@@ -144,19 +145,25 @@ const todayRevenue = ref(0);
 const todayProfit = ref(0);
 const todayOrders = ref(0);
 
-// 从本地存储加载销售数据
-const loadSales = () => {
-  const sales = JSON.parse(localStorage.getItem('sales') || '[]');
-  saleList.value = sales;
-  pagination.total = sales.length;
-  calculateStats();
+// 从API加载订单数据
+const loadSales = async () => {
+  try {
+    const response = await getOrders();
+    const orders = response.data || [];
+    saleList.value = orders;
+    pagination.total = orders.length;
+    calculateStats();
+  } catch (error) {
+    console.error('加载订单数据失败:', error);
+    ElMessage.error('加载订单数据失败，请检查网络连接');
+  }
 };
 
 // 计算统计数据
 const calculateStats = () => {
   const today = new Date().toISOString().split('T')[0];
   const todaySales = saleList.value.filter((sale: any) => 
-    sale.saleTime.startsWith(today)
+    sale.createdAt.startsWith(today)
   );
   
   todayRevenue.value = todaySales.reduce((sum: number, sale: any) => sum + sale.totalAmount, 0);
@@ -168,22 +175,18 @@ const calculateStats = () => {
 const handleSearch = () => {
   loading.value = true;
   
-  const allSales = JSON.parse(localStorage.getItem('sales') || '[]');
-  
-  let filteredSales = allSales.filter((sale: any) => {
+  let filteredSales = saleList.value.filter((sale: any) => {
     const keywordMatch = !searchForm.keyword || 
-      sale.productName.toLowerCase().includes(searchForm.keyword.toLowerCase()) ||
-      sale.customerName.toLowerCase().includes(searchForm.keyword.toLowerCase());
-    
-    const categoryMatch = !searchForm.category || sale.category === searchForm.category;
+      sale.customerName.toLowerCase().includes(searchForm.keyword.toLowerCase()) ||
+      sale.orderNumber.toLowerCase().includes(searchForm.keyword.toLowerCase());
     
     let dateMatch = true;
     if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      const saleDate = sale.saleTime.split('T')[0];
+      const saleDate = sale.createdAt.split('T')[0];
       dateMatch = saleDate >= searchForm.dateRange[0] && saleDate <= searchForm.dateRange[1];
     }
     
-    return keywordMatch && categoryMatch && dateMatch;
+    return keywordMatch && dateMatch;
   });
   
   saleList.value = filteredSales;
@@ -191,7 +194,7 @@ const handleSearch = () => {
   pagination.current = 1;
   
   loading.value = false;
-  ElMessage.success(`找到 ${filteredSales.length} 条销售记录`);
+  ElMessage.success(`找到 ${filteredSales.length} 条订单记录`);
 };
 
 // 重置搜索

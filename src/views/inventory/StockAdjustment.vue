@@ -108,6 +108,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowLeft } from '@element-plus/icons-vue';
+import { getProducts, updateProduct } from '@/api/admin/products';
 
 const router = useRouter();
 const route = useRoute();
@@ -138,13 +139,20 @@ const rules = {
 };
 
 // 加载商品信息
-const loadProduct = () => {
+const loadProduct = async () => {
   const productId = route.params.id;
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  product.value = products.find((p: any) => p.id === productId);
-  
-  if (!product.value) {
-    ElMessage.error('商品不存在');
+  try {
+    const response = await getProducts();
+    const products = response.data || [];
+    product.value = products.find((p: any) => p.id === parseInt(productId as string));
+    
+    if (!product.value) {
+      ElMessage.error('商品不存在');
+      router.back();
+    }
+  } catch (error) {
+    console.error('加载商品信息失败:', error);
+    ElMessage.error('加载商品信息失败，请检查网络连接');
     router.back();
   }
 };
@@ -253,37 +261,25 @@ const submitAdjustment = async () => {
     
     submitting.value = true;
     
-    // 更新商品库存
-    const products = JSON.parse(localStorage.getItem('products') || '[]');
-    const updatedProducts = products.map((p: any) => {
-      if (p.id === product.value.id) {
-        return {
-          ...p,
-          stock: newStock,
-          updateTime: new Date().toISOString()
-        };
+    // 通过API更新商品库存
+    try {
+      const updateData = {
+        ...product.value,
+        stock: newStock
+      };
+      
+      const result = await updateProduct(updateData);
+      
+      if (result.status === 200) {
+        ElMessage.success('库存调整成功');
+        router.back();
+      } else {
+        ElMessage.error('库存调整失败，请重试');
       }
-      return p;
-    });
-    
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-    
-    // 记录库存调整历史
-    const adjustmentHistory = JSON.parse(localStorage.getItem('stockAdjustments') || '[]');
-    adjustmentHistory.push({
-      id: Date.now().toString(),
-      productId: product.value.id,
-      productName: product.value.name,
-      oldStock: product.value.stock,
-      newStock: newStock,
-      type: adjustmentForm.type,
-      quantity: adjustmentForm.quantity,
-      reason: adjustmentForm.reason,
-      remark: adjustmentForm.remark,
-      adjustTime: new Date().toISOString()
-    });
-    
-    localStorage.setItem('stockAdjustments', JSON.stringify(adjustmentHistory));
+    } catch (error) {
+      console.error('库存调整失败:', error);
+      ElMessage.error('库存调整失败，请检查网络连接');
+    }
     
     ElMessage.success('库存调整成功');
     router.back();

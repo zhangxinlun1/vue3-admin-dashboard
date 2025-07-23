@@ -173,6 +173,8 @@ import {
   Plus,
   Warning
 } from '@element-plus/icons-vue';
+import { getProducts } from '@/api/admin/products';
+import { getOrders } from '@/api/admin/orders';
 
 const router = useRouter();
 
@@ -192,54 +194,10 @@ const inventoryChange = ref('持平');
 const revenuePeriod = ref('7');
 
 // 最近订单数据
-const recentOrders = ref([
-  {
-    id: 1,
-    orderNo: 'ORD202412001',
-    customerName: '张女士',
-    products: '商陆花束 x1, 玫瑰 x2',
-    totalAmount: 299,
-    status: 'completed',
-    createTime: '2024-12-01 14:30:25'
-  },
-  {
-    id: 2,
-    orderNo: 'ORD202412002',
-    customerName: '李先生',
-    products: '百合花束 x1',
-    totalAmount: 188,
-    status: 'processing',
-    createTime: '2024-12-01 15:20:10'
-  },
-  {
-    id: 3,
-    orderNo: 'ORD202412003',
-    customerName: '王小姐',
-    products: '康乃馨 x3, 满天星 x1',
-    totalAmount: 156,
-    status: 'pending',
-    createTime: '2024-12-01 16:15:42'
-  }
-]);
+const recentOrders = ref([]);
 
 // 库存预警数据
-const lowStockItems = ref([
-  {
-    id: 1,
-    name: '红玫瑰',
-    stock: 5
-  },
-  {
-    id: 2,
-    name: '白百合',
-    stock: 3
-  },
-  {
-    id: 3,
-    name: '粉康乃馨',
-    stock: 8
-  }
-]);
+const lowStockItems = ref([]);
 
 // 格式化数字
 const formatNumber = (num: number) => {
@@ -289,45 +247,54 @@ const restock = (item: any) => {
 };
 
 // 加载统计数据
-const loadStats = () => {
-  // 从本地存储加载商品数据
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  totalProducts.value = products.length;
-  
-  // 从本地存储加载销售数据
-  const sales = JSON.parse(localStorage.getItem('sales') || '[]');
-  const today = new Date().toISOString().split('T')[0];
-  
-  const todaySales = sales.filter((sale: any) => 
-    sale.saleTime.startsWith(today)
-  );
-  
-  todayRevenue.value = todaySales.reduce((sum: number, sale: any) => sum + sale.totalAmount, 0);
-  todayProfit.value = todaySales.reduce((sum: number, sale: any) => sum + sale.profit, 0);
-  todayOrders.value = todaySales.length;
-  todayItems.value = todaySales.reduce((sum: number, sale: any) => sum + sale.quantity, 0);
-  
-  // 更新最近订单
-  recentOrders.value = sales.slice(-5).map((sale: any) => ({
-    id: sale.id,
-    orderNo: `SALE${sale.id}`,
-    customerName: sale.customerName || '匿名客户',
-    products: `${sale.productName} x${sale.quantity}`,
-    totalAmount: sale.totalAmount,
-    status: 'completed',
-    createTime: sale.saleTime
-  }));
-  
-  // 更新库存预警
-  const lowStockProducts = products.filter((product: any) => 
-    product.stock <= product.alertStock && product.stock > 0
-  );
-  
-  lowStockItems.value = lowStockProducts.slice(0, 5).map((product: any) => ({
-    id: product.id,
-    name: product.name,
-    stock: product.stock
-  }));
+const loadStats = async () => {
+  try {
+    // 从API加载商品数据
+    const productsResponse = await getProducts();
+    const products = productsResponse.data || [];
+    totalProducts.value = products.length;
+    
+    // 从API加载订单数据
+    const ordersResponse = await getOrders();
+    const orders = ordersResponse.data || [];
+    const today = new Date().toISOString().split('T')[0];
+    
+    const todayOrders = orders.filter((order: any) => 
+      order.createdAt.startsWith(today)
+    );
+    
+    todayRevenue.value = todayOrders.reduce((sum: number, order: any) => sum + order.totalAmount, 0);
+    todayProfit.value = todayOrders.reduce((sum: number, order: any) => sum + order.profit, 0);
+    todayOrders.value = todayOrders.length;
+    todayItems.value = todayOrders.reduce((sum: number, order: any) => {
+      return sum + order.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0);
+    }, 0);
+    
+    // 更新最近订单
+    recentOrders.value = orders.slice(-5).map((order: any) => ({
+      id: order.id,
+      orderNo: order.orderNumber,
+      customerName: order.customerName || '匿名客户',
+      products: order.items.map((item: any) => `${item.productName} x${item.quantity}`).join(', '),
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createTime: order.createdAt
+    }));
+    
+    // 更新库存预警
+    const lowStockProducts = products.filter((product: any) => 
+      product.stock <= product.alertStock && product.stock > 0
+    );
+    
+    lowStockItems.value = lowStockProducts.slice(0, 5).map((product: any) => ({
+      id: product.id,
+      name: product.name,
+      stock: product.stock
+    }));
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+    ElMessage.error('加载统计数据失败，请检查网络连接');
+  }
 };
 
 onMounted(() => {

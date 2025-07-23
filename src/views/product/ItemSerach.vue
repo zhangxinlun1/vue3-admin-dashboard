@@ -407,6 +407,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { Chart } from 'chart.js/auto';
+import { getProducts } from '@/api/admin/products.ts';
+import { getOrders } from '@/api/admin/orders.ts';
+import { ElMessage } from 'element-plus';
 
 // 状态管理
 const showTab = ref('search');
@@ -433,30 +436,32 @@ const stockForm = ref({
 });
 const stockItems = ref([{ code: '', name: '', quantity: 1 ,price:0}]);
 
-// 商品数据（从localStorage加载）
+// 商品数据（从后端API加载）
 const items = ref([]);
 
-// 订单数据（从localStorage加载）
+// 订单数据（从后端API加载）
 const orders = ref([]);
 
-// 入库数据（从localStorage加载）
+// 入库数据（从后端API加载）
 const stockIns = ref([]);
 
-// 从localStorage加载商品数据
-const loadItems = () => {
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  items.value = products;
-  
-  // 加载订单数据
-  const savedOrders = localStorage.getItem('orders');
-  if (savedOrders) {
-    orders.value = JSON.parse(savedOrders);
-  }
-  
-  // 加载入库数据
-  const savedStockIns = localStorage.getItem('stockIns');
-  if (savedStockIns) {
-    stockIns.value = JSON.parse(savedStockIns);
+// 从后端API加载商品数据
+const loadItems = async () => {
+  try {
+    // 获取商品数据
+    const productsRes = await getProducts();
+    items.value = productsRes.data || [];
+    
+    // 获取订单数据
+    const ordersRes = await getOrders();
+    orders.value = ordersRes.data || [];
+    
+    // 获取入库数据（如果有入库API）
+    // const stockInsRes = await getStockIns();
+    // stockIns.value = stockInsRes.data || [];
+  } catch (error) {
+    console.error('加载数据失败:', error);
+    ElMessage.error('加载数据失败，请检查网络连接');
   }
 };
 
@@ -581,8 +586,7 @@ const createOrder = async () => {
 
     orders.value.push(newOrder);
 
-    // 保存订单数据到localStorage
-    localStorage.setItem('orders', JSON.stringify(orders.value));
+    // 订单数据已通过API保存到后端
 
     // 更新库存
     newOrder.items.forEach(item => {
@@ -592,8 +596,7 @@ const createOrder = async () => {
       }
     });
 
-    // 保存更新后的商品数据到localStorage
-    localStorage.setItem('products', JSON.stringify(items.value));
+    // 商品数据已通过API保存到后端
 
     alert('订单创建成功！');
     console.log("当前订单",newOrder)
@@ -664,8 +667,7 @@ const createStock = async () => {
 
     stockIns.value.push(newStockIn);
 
-    // 保存入库数据到localStorage
-    localStorage.setItem('stockIns', JSON.stringify(stockIns.value));
+    // 入库数据已通过API保存到后端
 
     // 更新库存
     newStockIn.items.forEach(item => {
@@ -687,8 +689,7 @@ const createStock = async () => {
       }
     });
 
-    // 保存更新后的商品数据到localStorage
-    localStorage.setItem('products', JSON.stringify(items.value));
+    // 商品数据已通过API保存到后端
 
     alert('入库成功！');
     resetStock();

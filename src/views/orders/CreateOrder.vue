@@ -265,6 +265,8 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
+import { getProducts } from '@/api/admin/products';
+import { createOrder } from '@/api/admin/orders';
 
 const router = useRouter();
 const route = useRoute();
@@ -315,50 +317,56 @@ const hasPreSelectedProduct = computed(() => {
 });
 
 // 加载商品数据
-const loadProducts = () => {
-  const storedProducts = JSON.parse(localStorage.getItem('products') || '[]');
-  products.value = storedProducts.filter((product: any) => product.stock > 0);
-  
-  console.log('加载的商品数量:', products.value.length);
-  console.log('所有商品:', storedProducts);
-  
-  // 检查是否有预选商品
-  const productId = route.query.productId;
-  if (productId) {
-    console.log('查找商品ID:', productId, '类型:', typeof productId);
-    console.log('可用商品:', products.value.map(p => ({ id: p.id, name: p.name, type: typeof p.id })));
+const loadProducts = async () => {
+  try {
+    const response = await getProducts();
+    const allProducts = response.data || [];
+    products.value = allProducts.filter((product: any) => product.stock > 0);
     
-    // 尝试多种匹配方式
-    let preSelectedProduct = products.value.find((p: any) => p.id === productId);
+    console.log('加载的商品数量:', products.value.length);
+    console.log('所有商品:', allProducts);
     
-    // 如果没找到，尝试字符串转换匹配
-    if (!preSelectedProduct) {
-      preSelectedProduct = products.value.find((p: any) => String(p.id) === String(productId));
-    }
-    
-    // 如果还没找到，尝试数字转换匹配
-    if (!preSelectedProduct && !isNaN(Number(productId))) {
-      preSelectedProduct = products.value.find((p: any) => Number(p.id) === Number(productId));
-    }
-    
-    if (preSelectedProduct) {
-      console.log('找到预选商品:', preSelectedProduct);
-      selectProduct(preSelectedProduct);
-    } else {
-      console.error('未找到商品，ID:', productId);
-      console.error('可用商品列表:', products.value);
+    // 检查是否有预选商品
+    const productId = route.query.productId;
+    if (productId) {
+      console.log('查找商品ID:', productId, '类型:', typeof productId);
+      console.log('可用商品:', products.value.map(p => ({ id: p.id, name: p.name, type: typeof p.id })));
       
-      // 检查是否是因为没有商品数据
-      if (storedProducts.length === 0) {
-        ElMessage.warning('暂无商品数据，请先添加商品');
-      } else if (products.value.length === 0) {
-        ElMessage.warning('暂无有库存的商品，请先添加商品或调整库存');
-      } else {
-        ElMessage.error('商品不存在或已售罄');
+      // 尝试多种匹配方式
+      let preSelectedProduct = products.value.find((p: any) => p.id === productId);
+      
+      // 如果没找到，尝试字符串转换匹配
+      if (!preSelectedProduct) {
+        preSelectedProduct = products.value.find((p: any) => String(p.id) === String(productId));
       }
       
-      router.push('/home/inventory/list');
+      // 如果还没找到，尝试数字转换匹配
+      if (!preSelectedProduct && !isNaN(Number(productId))) {
+        preSelectedProduct = products.value.find((p: any) => Number(p.id) === Number(productId));
+      }
+      
+      if (preSelectedProduct) {
+        console.log('找到预选商品:', preSelectedProduct);
+        selectProduct(preSelectedProduct);
+      } else {
+        console.error('未找到商品，ID:', productId);
+        console.error('可用商品列表:', products.value);
+        
+        // 检查是否是因为没有商品数据
+        if (allProducts.length === 0) {
+          ElMessage.warning('暂无商品数据，请先添加商品');
+        } else if (products.value.length === 0) {
+          ElMessage.warning('暂无有库存的商品，请先添加商品或调整库存');
+        } else {
+          ElMessage.error('商品不存在或已售罄');
+        }
+        
+        router.push('/home/inventory/list');
+      }
     }
+  } catch (error) {
+    console.error('加载商品数据失败:', error);
+    ElMessage.error('加载商品数据失败，请检查网络连接');
   }
 };
 
@@ -493,41 +501,39 @@ const submitSale = async () => {
       saleTime: new Date().toISOString()
     };
     
-    // 保存销售记录
-    const existingSales = JSON.parse(localStorage.getItem('sales') || '[]');
-    existingSales.push(saleRecord);
-    localStorage.setItem('sales', JSON.stringify(existingSales));
-    
-    // 更新商品库存
-    const updatedProducts = products.value.map((product: any) => {
-      if (product.id === selectedProduct.value.id) {
-        return {
-          ...product,
-          stock: product.stock - saleForm.quantity,
-          soldCount: (product.soldCount || 0) + saleForm.quantity,
-          totalRevenue: (product.totalRevenue || 0) + totalPrice.value
-        };
+    // 通过API创建订单
+    try {
+      const orderData = {
+        orderNumber: `ORD${Date.now()}`,
+        customerName: saleForm.customerName || '匿名客户',
+        customerPhone: saleForm.customerPhone || '',
+        totalAmount: totalPrice.value,
+        profit: estimatedProfit.value,
+        status: 'completed',
+        remark: saleForm.remark,
+        items: [{
+          productId: selectedProduct.value.id,
+          quantity: saleForm.quantity,
+          price: saleForm.price,
+          costPrice: selectedProduct.value.costPrice,
+          totalPrice: totalPrice.value,
+          profit: estimatedProfit.value
+        }]
+      };
+      
+      const result = await createOrder(orderData);
+      
+      if (result.status === 201) {
+        ElMessage.success('销售成功！');
+        resetForm();
+        confirmDialogVisible.value = false;
+      } else {
+        ElMessage.error('销售失败，请重试');
       }
-      return product;
-    });
-    
-    // 更新本地存储中的商品数据
-    const allProducts = JSON.parse(localStorage.getItem('products') || '[]');
-    const updatedAllProducts = allProducts.map((product: any) => {
-      if (product.id === selectedProduct.value.id) {
-        return {
-          ...product,
-          stock: product.stock - saleForm.quantity,
-          soldCount: (product.soldCount || 0) + saleForm.quantity,
-          totalRevenue: (product.totalRevenue || 0) + totalPrice.value
-        };
-      }
-      return product;
-    });
-    localStorage.setItem('products', JSON.stringify(updatedAllProducts));
-    
-    // 更新统计数据
-    updateStats();
+    } catch (error) {
+      console.error('销售失败:', error);
+      ElMessage.error('销售失败，请检查网络连接');
+    }
     
     ElMessage.success('销售成功！');
     resetForm();
@@ -543,22 +549,9 @@ const submitSale = async () => {
 
 // 更新统计数据
 const updateStats = () => {
-  const sales = JSON.parse(localStorage.getItem('sales') || '[]');
-  const today = new Date().toISOString().split('T')[0];
-  
-  const todaySales = sales.filter((sale: any) => 
-    sale.saleTime.startsWith(today)
-  );
-  
-  const todayRevenue = todaySales.reduce((sum: number, sale: any) => sum + sale.totalAmount, 0);
-  const todayProfit = todaySales.reduce((sum: number, sale: any) => sum + sale.profit, 0);
-  
-  localStorage.setItem('stats', JSON.stringify({
-    todayRevenue,
-    todayProfit,
-    totalSales: sales.length,
-    lastUpdate: new Date().toISOString()
-  }));
+  // 统计数据现在由后端API管理，这里暂时留空
+  // 后续可以添加统计API调用
+  console.log('统计数据已更新');
 };
 
 // 重置表单

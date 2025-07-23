@@ -27,12 +27,16 @@ export interface IProduct {
 	id: number;
 	name: string;
 	description: string;
-	price: number;
+	salePrice: number;
+	costPrice: number;
 	category: string;
 	stock: number;
 	specification?: string;
 	color?: string;
-	img:string;
+	img: string;
+	code: string;
+	unit: string;
+	status: string;
 }
 export interface IAxiosRequestOptions {
 	method: HttpMethods;

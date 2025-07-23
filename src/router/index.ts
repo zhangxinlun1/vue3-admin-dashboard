@@ -20,7 +20,7 @@ import SimpleImageTest from "@/views/SimpleImageTest.vue";
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
-        redirect: '/home/inventory/list'
+        redirect: '/home/product-manage'
     },
     {
         path: '/login',

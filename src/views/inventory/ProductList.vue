@@ -183,6 +183,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus, Search, Refresh } from '@element-plus/icons-vue';
+import { getProducts, deleteProduct as deleteProductApi } from '@/api/admin/products';
 
 const router = useRouter();
 const loading = ref(false);
@@ -204,12 +205,17 @@ const pagination = reactive({
 // 商品列表数据
 const productList = ref([]);
 
-// 从本地存储加载商品数据
-const loadProducts = () => {
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  console.log(products);
-  productList.value = products;
-  pagination.total = products.length;
+// 从后端API加载商品数据
+const loadProducts = async () => {
+  try {
+    const response = await getProducts();
+    productList.value = response.data || [];
+    pagination.total = productList.value.length;
+    console.log('从后端加载的商品数据:', productList.value);
+  } catch (error) {
+    console.error('加载商品数据失败:', error);
+    ElMessage.error('加载商品数据失败，请检查网络连接');
+  }
 };
 
 // 格式化数字
@@ -249,11 +255,8 @@ const getCategoryText = (category: string) => {
 const handleSearch = () => {
   loading.value = true;
   
-  // 从本地存储获取所有商品
-  const allProducts = JSON.parse(localStorage.getItem('products') || '[]');
-  
-  // 根据搜索条件过滤
-  let filteredProducts = allProducts.filter((product: any) => {
+  // 从当前加载的商品数据中过滤
+  let filteredProducts = productList.value.filter((product: any) => {
     const keywordMatch = !searchForm.keyword || 
       product.name.toLowerCase().includes(searchForm.keyword.toLowerCase()) ||
       product.code.toLowerCase().includes(searchForm.keyword.toLowerCase());
@@ -326,17 +329,16 @@ const deleteProduct = async (product: any) => {
       }
     );
     
-    // 从本地存储中删除商品
-    const products = JSON.parse(localStorage.getItem('products') || '[]');
-    const updatedProducts = products.filter((p: any) => p.id !== product.id);
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
+    // 调用后端API删除商品
+    await deleteProductApi(product.id);
     
     // 重新加载商品列表
     loadProducts();
     
     ElMessage.success('商品删除成功');
   } catch (error) {
-    // 用户取消删除
+    console.error('删除商品失败:', error);
+    ElMessage.error('删除商品失败，请重试');
   }
 };
 

@@ -159,6 +159,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { ArrowLeft } from '@element-plus/icons-vue';
+import { getProductById } from '@/api/admin/products';
 
 const router = useRouter();
 const route = useRoute();
@@ -167,31 +168,30 @@ const product = ref(null);
 const salesRecords = ref([]);
 
 // 加载商品详情
-const loadProductDetail = () => {
+const loadProductDetail = async () => {
   const productId = route.params.id;
   
-  // 首先尝试从localStorage获取
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  let foundProduct = products.find((p: any) => p.id === productId);
-  
-  // 如果localStorage中没有找到商品，显示错误信息
-  if (!foundProduct) {
-    ElMessage.error('商品不存在');
+  try {
+    loading.value = true;
+    const response = await getProductById(Number(productId));
+    product.value = response.data;
+    
+    if (product.value) {
+      loadSalesRecords();
+    }
+  } catch (error) {
+    console.error('加载商品详情失败:', error);
+    ElMessage.error('商品不存在或加载失败');
     router.push('/home/inventory/list');
-    return;
-  }
-  
-  product.value = foundProduct;
-  
-  if (product.value) {
-    loadSalesRecords();
+  } finally {
+    loading.value = false;
   }
 };
 
 // 加载销售记录
 const loadSalesRecords = () => {
-  const sales = JSON.parse(localStorage.getItem('sales') || '[]');
-  salesRecords.value = sales.filter((sale: any) => sale.productId === product.value.id);
+  // 暂时使用空数组，后续可以添加销售记录API
+  salesRecords.value = [];
 };
 
 // 获取分类类型

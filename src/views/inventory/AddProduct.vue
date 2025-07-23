@@ -190,6 +190,7 @@ import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
 import type { FormInstance, UploadProps, UploadUserFile } from 'element-plus';
+import { addProduct } from '@/api/admin/products';
 
 const router = useRouter();
 const formRef = ref<FormInstance>();
@@ -344,29 +345,29 @@ const submitForm = async () => {
     // 生成商品ID
     const productId = Date.now().toString();
     
-    // 创建商品对象
+    // 创建商品对象，匹配后端DTO格式
     const product = {
-      id: productId,
-      ...form,
-      // 使用第一张图片作为主图
-      img: form.images.length > 0 ? form.images[0] : '',
-      createTime: new Date().toISOString(),
-      updateTime: new Date().toISOString(),
-      soldCount: 0,
-      totalRevenue: 0
+      name: form.name,
+      code: form.code,
+      category: form.category,
+      salePrice: form.salePrice, // 销售价
+      costPrice: form.costPrice, // 进货价
+      stock: form.stock,
+      unit: '件', // 默认单位
+      description: form.description,
+      image: form.images.length > 0 ? form.images[0] : '',
+      status: 'active' // 默认状态
     };
     
-    // 获取现有商品列表
-    const existingProducts = JSON.parse(localStorage.getItem('products') || '[]');
+    // 通过API保存商品到数据库
+    const result = await addProduct(product);
     
-    // 添加新商品
-    existingProducts.push(product);
-    
-    // 保存到本地存储
-    localStorage.setItem('products', JSON.stringify(existingProducts));
-    
-    // 更新统计数据
-    updateStats();
+    if (result.status === 201) {
+      ElMessage.success('商品入库成功！');
+      router.push('/home/inventory/list');
+    } else {
+      ElMessage.error('商品入库失败，请重试');
+    }
     
     ElMessage.success('商品入库成功！');
     router.push('/home/inventory/list');
@@ -378,20 +379,7 @@ const submitForm = async () => {
   }
 };
 
-// 更新统计数据
-const updateStats = () => {
-  const products = JSON.parse(localStorage.getItem('products') || '[]');
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum: number, product: any) => sum + (product.stock || 0), 0);
-  const totalValue = products.reduce((sum: number, product: any) => sum + (product.stock * product.costPrice), 0);
-  
-  localStorage.setItem('stats', JSON.stringify({
-    totalProducts,
-    totalStock,
-    totalValue,
-    lastUpdate: new Date().toISOString()
-  }));
-};
+// 统计数据现在从后端API获取
 
 // 重置表单
 const resetForm = () => {
