@@ -12,11 +12,6 @@ dist
 dist-ssr
 *.local
 
-# 环境变量文件
-.env
-.env.local
-.env.production
-.env.development
 
 # Editor directories and files
 .vscode/extensions.json
